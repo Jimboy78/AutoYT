@@ -1,16 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AudioLines, CheckCircle2, Clapperboard, Film, Flame, Gauge, ImageIcon, ListVideo, Loader2, RotateCcw, Scissors, Smartphone, Terminal, VolumeX } from "lucide-react";
+import Link from "next/link";
+import { AudioLines, CheckCircle2, Clapperboard, Database, Film, Flame, Gauge, ImageIcon, ListVideo, Loader2, RotateCcw, Scissors, SlidersHorizontal, Smartphone, Terminal, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getProject, projectAsFile, projectIdFor, saveProject, updateProject } from "@/lib/library";
+import { presetById, usePresetChoice } from "@/lib/presets";
 import {
   buildChapters,
   decodeAudio,
+  DEFAULT_DETECT,
   detectMoments,
   measureEnergy,
   pickFrameTimes,
+  type DetectOptions,
   type Energy,
   type Highlight,
 } from "@/lib/studio/analyze";
@@ -20,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { Dropzone } from "./ui/Dropzone";
 import { ChaptersPanel, defaultChapterTitle, ExportPanel } from "./ui/ExportPanels";
 import { MomentList } from "./ui/MomentList";
+import { RecentProjects } from "./ui/RecentProjects";
 import { ShortsForge } from "./ui/ShortsForge";
 import { ThumbnailMaker } from "./ui/ThumbnailMaker";
 import { Waveform } from "./ui/Waveform";
@@ -50,14 +56,20 @@ export default function StudioPage() {
   const [shorts, setShorts] = useState(false);
   const [makerFrame, setMakerFrame] = useState<FrameCandidate | null>(null);
   const [chapterTitles, setChapterTitles] = useState<Record<number, string>>({});
+  const [detect, setDetect] = useState<DetectOptions>(DEFAULT_DETECT);
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [preset] = usePresetChoice();
+  const presetRef = useRef(preset);
+  presetRef.current = preset;
   const videoRef = useRef<HTMLVideoElement>(null);
   const stopAtRef = useRef<number | null>(null);
 
   useEffect(() => () => void (src && URL.revokeObjectURL(src)), [src]);
 
   const moments = useMemo(
-    () => (energy ? detectMoments(energy.db, energy.duration, sensitivity) : null),
-    [energy, sensitivity],
+    () => (energy ? detectMoments(energy.db, energy.duration, sensitivity, detect) : null),
+    [energy, sensitivity, detect],
   );
   const chapters = useMemo(
     () => (energy && moments ? buildChapters(energy.duration, moments.highlights) : []),
@@ -75,9 +87,20 @@ export default function StudioPage() {
       setFrames([]);
       setSelectedId(null);
       setChapterTitles({});
+      setProjectId(null);
+      setSaveError(null);
       setStep(0);
       setFrameProgress(0);
       try {
+        const id = projectIdFor(f);
+        const previous = await getProject(id).catch(() => undefined);
+        const choice = presetRef.current;
+        const sens = previous?.sensitivity ?? choice.sensitivity;
+        const previousTitles: Record<number, string> = Object.fromEntries((previous?.chapters ?? []).map((c) => [c.time, c.title]));
+        setSensitivity(sens);
+        setDetect(choice.detect);
+        setChapterTitles(previousTitles);
+
         await nextFrame();
         const buffer = await decodeAudio(f);
         setStep(1);
@@ -85,7 +108,7 @@ export default function StudioPage() {
         const measured = measureEnergy(buffer);
         setStep(2);
         await nextFrame();
-        const detected = detectMoments(measured.db, measured.duration, sensitivity);
+        const detected = detectMoments(measured.db, measured.duration, sens, choice.detect);
         setEnergy(measured);
         setStep(3);
         const extracted = f.type.startsWith("video/")
@@ -95,15 +118,86 @@ export default function StudioPage() {
           : [];
         setStep(4);
         await nextFrame();
-        setFrames(extracted.sort((a, b) => b.score - a.score));
+        const sorted = extracted.sort((a, b) => b.score - a.score);
+        setFrames(sorted);
         setPhase("ready");
+
+        try {
+          const now = Date.now();
+          await saveProject(
+            {
+              id,
+              name: f.name,
+              mime: f.type,
+              size: f.size,
+              lastModified: f.lastModified,
+              createdAt: previous?.createdAt ?? now,
+              updatedAt: now,
+              duration: measured.duration,
+              width: videoRef.current?.videoWidth ?? previous?.width ?? 0,
+              height: videoRef.current?.videoHeight ?? previous?.height ?? 0,
+              hasVideo: f.type.startsWith("video/"),
+              db: measured.db,
+              waveform: measured.waveform,
+              sensitivity: sens,
+              presetId: choice.id,
+              highlights: detected.highlights,
+              chapters: buildChapters(measured.duration, detected.highlights).map((c, i) => ({
+                time: c.time,
+                title: previousTitles[c.time] ?? defaultChapterTitle(c, i),
+              })),
+              thumbs: sorted.slice(0, 12).map(({ time, score, highlightId, dataUrl }) => ({ time, score, highlightId, dataUrl })),
+              poster: sorted[0]?.dataUrl ?? previous?.poster,
+              transcript: previous?.transcript,
+              publish: previous?.publish,
+            },
+            previous ? undefined : f,
+          );
+          setProjectId(id);
+        } catch (err) {
+          setSaveError(err instanceof Error ? err.message : "No se pudo guardar en la biblioteca.");
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "No se pudo analizar el archivo.");
         setPhase("error");
       }
     },
-    [sensitivity],
+    [],
   );
+
+  // Keep the library in sync with sensitivity and chapter edits.
+  useEffect(() => {
+    if (!projectId || !energy || !moments || phase !== "ready") return;
+    const timer = setTimeout(() => {
+      void updateProject(projectId, {
+        sensitivity,
+        highlights: moments.highlights,
+        chapters: buildChapters(energy.duration, moments.highlights).map((c, i) => ({
+          time: c.time,
+          title: chapterTitles[c.time] ?? defaultChapterTitle(c, i),
+        })),
+      });
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [projectId, energy, moments, sensitivity, chapterTitles, phase]);
+
+  const openProject = useCallback(
+    async (id: string) => {
+      try {
+        const project = await getProject(id);
+        if (!project) throw new Error("Ese proyecto ya no existe en la biblioteca.");
+        await analyze(await projectAsFile(project));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "No se pudo abrir el proyecto.");
+      }
+    },
+    [analyze],
+  );
+
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("p");
+    if (id) void openProject(id);
+  }, [openProject]);
 
   const seek = (time: number) => {
     const v = videoRef.current;
@@ -131,9 +225,12 @@ export default function StudioPage() {
 
   if (phase === "idle" || !file || !src) {
     return (
-      <div className="mx-auto max-w-4xl space-y-8 py-6">
+      <div className="mx-auto max-w-5xl space-y-8 py-6">
         <StudioHeader />
+        <PresetChip id={preset.id} className="mx-auto" />
+        {error && <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">{error}</div>}
         <Dropzone onFile={analyze} />
+        <RecentProjects onOpen={openProject} />
       </div>
     );
   }
@@ -149,10 +246,19 @@ export default function StudioPage() {
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Studio · análisis local</p>
           <h1 className="truncate font-display text-3xl tracking-wide md:text-4xl">{file.name}</h1>
-          <p className="text-sm text-zinc-500">
-            {formatBytes(file.size)}
-            {energy && ` · ${formatClock(energy.duration)}`}
-          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-500">
+            <span>
+              {formatBytes(file.size)}
+              {energy && ` · ${formatClock(energy.duration)}`}
+            </span>
+            <PresetChip id={preset.id} />
+            {projectId && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-300">
+                <Database className="h-3 w-3" /> Guardado en la biblioteca
+              </span>
+            )}
+            {saveError && <span className="text-xs text-amber-300">{saveError}</span>}
+          </div>
         </div>
         <Button variant="outline" onClick={reset} className="border-white/15 bg-transparent">
           <RotateCcw className="mr-2 h-4 w-4" /> Otro archivo
@@ -293,7 +399,16 @@ export default function StudioPage() {
 
           {isVideo && (
             <TabsContent value="shorts">
-              <ShortsForge src={src} fileName={file.name} duration={energy.duration} highlights={highlights} z={moments.z} />
+              <ShortsForge
+                key={projectId ?? file.name}
+                src={src}
+                fileName={file.name}
+                duration={energy.duration}
+                highlights={highlights}
+                z={moments.z}
+                projectId={projectId}
+                defaults={presetById(preset.id).shorts}
+              />
             </TabsContent>
           )}
 
@@ -368,6 +483,20 @@ function StudioHeader() {
         AUTOYT <span className="text-gradient">STUDIO</span>
       </h1>
     </div>
+  );
+}
+
+function PresetChip({ id, className }: { id: string; className?: string }) {
+  return (
+    <Link
+      href="/edit-type"
+      className={cn(
+        "flex w-fit items-center gap-1.5 rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-zinc-300 transition-colors hover:border-[#ff9f1c]/60",
+        className,
+      )}
+    >
+      <SlidersHorizontal className="h-3 w-3 text-[#ff9f1c]" /> Preset: {presetById(id).title}
+    </Link>
   );
 }
 

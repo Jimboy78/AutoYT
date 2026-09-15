@@ -99,11 +99,33 @@ export function measureEnergy(buffer: AudioBuffer, bins = 1600): Energy {
   return { duration: buffer.duration, db, waveform };
 }
 
+export interface DetectOptions {
+  /** Loud runs closer than this many seconds become one moment. */
+  mergeGap: number;
+  /** Context added before / after the loud part, seconds. */
+  padBefore: number;
+  padAfter: number;
+  /** Moments shorter than this (after padding) are dropped. */
+  minLength: number;
+  /** Keep only the best N moments. */
+  maxHighlights: number;
+}
+
+export const DEFAULT_DETECT: DetectOptions = { mergeGap: 1.5, padBefore: 2, padAfter: 1, minLength: 1.5, maxHighlights: 12 };
+
+export const thresholdFor = (sensitivity: number) => 4 - (Math.min(100, Math.max(0, sensitivity)) / 100) * 3;
+
 /**
  * sensitivity 0..100 → z-score threshold 4..1. Uses median/MAD instead of mean/std so
  * a few very loud minutes don't hide every other peak.
  */
-export function detectMoments(db: Float32Array, duration: number, sensitivity: number): Moments {
+export function detectMoments(
+  db: Float32Array,
+  duration: number,
+  sensitivity: number,
+  options: Partial<DetectOptions> = {},
+): Moments {
+  const opt = { ...DEFAULT_DETECT, ...options };
   const n = db.length;
   const k = Math.max(1, Math.round(0.5 / HOP));
   const prefix = new Float64Array(n + 1);
@@ -127,7 +149,7 @@ export function detectMoments(db: Float32Array, duration: number, sensitivity: n
     if (db[i] > peakDb) peakDb = db[i];
   }
 
-  const threshold = 4 - (Math.min(100, Math.max(0, sensitivity)) / 100) * 3;
+  const threshold = thresholdFor(sensitivity);
 
   // Runs above threshold → merge close runs → pad for context.
   const runs: { s: number; e: number; peak: number; peakI: number }[] = [];
@@ -144,7 +166,7 @@ export function detectMoments(db: Float32Array, duration: number, sensitivity: n
       i++;
     }
     const last = runs[runs.length - 1];
-    if (last && (s - last.e) * HOP < 1.5) {
+    if (last && (s - last.e) * HOP < opt.mergeGap) {
       last.e = i;
       if (peak > last.peak) {
         last.peak = peak;
@@ -157,15 +179,15 @@ export function detectMoments(db: Float32Array, duration: number, sensitivity: n
 
   const highlights = runs
     .map((r) => {
-      const start = Math.max(0, r.s * HOP - 2);
-      const end = Math.min(duration, r.e * HOP + 1);
+      const start = Math.max(0, r.s * HOP - opt.padBefore);
+      const end = Math.min(duration, r.e * HOP + opt.padAfter);
       const len = end - start;
       const score = Math.round(Math.min(100, (r.peak / (threshold + 4)) * 80 + Math.min(20, len * 2)));
       return { id: 0, start, end, peakTime: r.peakI * HOP, peakZ: r.peak, score };
     })
-    .filter((h) => h.end - h.start >= 1.5)
+    .filter((h) => h.end - h.start >= opt.minLength)
     .sort((a, b) => b.score - a.score)
-    .slice(0, 12)
+    .slice(0, opt.maxHighlights)
     .sort((a, b) => a.start - b.start)
     .map((h, i) => ({ ...h, id: i + 1 }));
 

@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AudioLines, Crosshair, Download, Loader2, Play, Square, Wand2, Zap } from "lucide-react";
+import Link from "next/link";
+import { AudioLines, Crosshair, Database, Download, Loader2, Play, Square, Wand2, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
+import { saveRender } from "@/lib/library";
+import type { ShortsDefaults } from "@/lib/presets";
 import type { Highlight } from "@/lib/studio/analyze";
 import { formatBytes, formatClock } from "@/lib/studio/format";
 import { recordingMime, renderShort, SHORT_STYLES, type TrackSample } from "@/lib/studio/shorts";
@@ -22,6 +25,7 @@ interface Result {
   size: number;
   mime: string;
   elapsed: number;
+  saved: boolean;
 }
 
 interface Props {
@@ -30,18 +34,21 @@ interface Props {
   duration: number;
   highlights: Highlight[];
   z: Float32Array;
+  /** When set, finished renders are stored in the library's clip gallery. */
+  projectId?: string | null;
+  defaults?: ShortsDefaults;
 }
 
-export function ShortsForge({ src, fileName, duration, highlights, z }: Props) {
+export function ShortsForge({ src, fileName, duration, highlights, z, projectId, defaults }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(highlights[0]?.id ?? null);
-  const [hook, setHook] = useState(HOOKS[0]);
+  const [hook, setHook] = useState(defaults?.hook ?? HOOKS[0]);
   const [styleId, setStyleId] = useState(SHORT_STYLES[0].id);
-  const [reframe, setReframe] = useState(true);
-  const [punch, setPunch] = useState(true);
-  const [bars, setBars] = useState(true);
-  const [pad, setPad] = useState(1);
+  const [reframe, setReframe] = useState(defaults?.reframe ?? true);
+  const [punch, setPunch] = useState(defaults?.punch ?? true);
+  const [bars, setBars] = useState(defaults?.bars ?? true);
+  const [pad, setPad] = useState(defaults?.pad ?? 1);
   const [status, setStatus] = useState<Status>("idle");
   const [progress, setProgress] = useState(0);
   const [samples, setSamples] = useState<TrackSample[]>([]);
@@ -98,13 +105,30 @@ export function ShortsForge({ src, fileName, duration, highlights, z }: Props) {
       setSamples(out.samples);
       if (out.blob) {
         const base = fileName.replace(/\.[^.]+$/, "").replace(/[^\w-]+/g, "_");
-        setResult({
-          url: URL.createObjectURL(out.blob),
-          name: `${base}_short${String(highlight.id).padStart(2, "0")}.${out.mime.includes("mp4") ? "mp4" : "webm"}`,
-          size: out.blob.size,
-          mime: out.mime.split(";")[0],
-          elapsed: out.elapsed,
-        });
+        const name = `${base}_short${String(highlight.id).padStart(2, "0")}.${out.mime.includes("mp4") ? "mp4" : "webm"}`;
+        const mime = out.mime.split(";")[0];
+        let saved = false;
+        if (projectId) {
+          try {
+            await saveRender(
+              {
+                projectId,
+                kind: "short",
+                name,
+                mime,
+                duration: end - start,
+                width: 720,
+                height: 1280,
+                settings: { highlightId: highlight.id, start, end, hook, style: style.id, reframe, punch, bars },
+              },
+              out.blob,
+            );
+            saved = true;
+          } catch (err) {
+            setError(err instanceof Error ? err.message : "No se pudo guardar el render en la biblioteca.");
+          }
+        }
+        setResult({ url: URL.createObjectURL(out.blob), name, size: out.blob.size, mime, elapsed: out.elapsed, saved });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo renderizar el clip.");
@@ -255,6 +279,11 @@ export function ShortsForge({ src, fileName, duration, highlights, z }: Props) {
               <p className="text-xs text-zinc-400">
                 720×1280 · {result.mime} · {formatBytes(result.size)} · render {(result.elapsed / 1000).toFixed(1)} s
               </p>
+              {result.saved && (
+                <Link href="/clips" className="mt-1 inline-flex items-center gap-1 text-xs text-emerald-300 hover:underline">
+                  <Database className="h-3 w-3" /> Guardado en la Galería de clips
+                </Link>
+              )}
             </div>
             <Button asChild className="bg-emerald-500 text-black hover:bg-emerald-400">
               <a href={result.url} download={result.name}>

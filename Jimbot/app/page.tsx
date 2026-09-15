@@ -68,15 +68,17 @@ export default function HomePage() {
         <div className="glow pointer-events-none absolute -left-40 -top-40 h-[520px] w-[520px] bg-[#ff2e63]/25" />
         <div className="glow pointer-events-none absolute -right-40 top-20 h-[460px] w-[460px] bg-violet-600/20" />
 
-        <div className="relative mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.05fr_1fr]">
+        <div className="relative mx-auto grid max-w-6xl items-center gap-12 xl:grid-cols-[1.05fr_1fr]">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300">
               <Lock className="h-3.5 w-3.5 text-emerald-400" /> Studio 100% en el navegador · nada se sube
             </span>
-            <h1 className="mt-6 font-display text-6xl leading-[0.92] tracking-wide md:text-7xl xl:text-8xl">
-              DE VOD ETERNO
-              <br />A <span className="text-gradient">HIGHLIGHTS</span>
-              <br />EN SEGUNDOS.
+            <h1 className="mt-6 font-display text-5xl leading-[0.95] tracking-wide sm:text-6xl 2xl:text-7xl">
+              <span className="block sm:whitespace-nowrap">DE VOD ETERNO</span>
+              <span className="block sm:whitespace-nowrap">
+                A <span className="text-gradient">HIGHLIGHTS</span>
+              </span>
+              <span className="block sm:whitespace-nowrap">EN SEGUNDOS.</span>
             </h1>
             <p className="mt-6 max-w-xl text-lg text-zinc-400">
               AutoYT encuentra los momentos más intensos de tu stream, arma los capítulos y te propone miniaturas. Un

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AudioLines, CheckCircle2, Clapperboard, Film, Flame, Gauge, ImageIcon, ListVideo, Loader2, RotateCcw, Smartphone, Terminal, VolumeX } from "lucide-react";
+import { AudioLines, CheckCircle2, Clapperboard, Film, Flame, Gauge, ImageIcon, ListVideo, Loader2, RotateCcw, Scissors, Smartphone, Terminal, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { Dropzone } from "./ui/Dropzone";
 import { ChaptersPanel, defaultChapterTitle, ExportPanel } from "./ui/ExportPanels";
 import { MomentList } from "./ui/MomentList";
+import { ShortsForge } from "./ui/ShortsForge";
 import { ThumbnailMaker } from "./ui/ThumbnailMaker";
 import { Waveform } from "./ui/Waveform";
 
@@ -139,6 +140,8 @@ export default function StudioPage() {
 
   const best = frames[0];
   const highlights = moments?.highlights ?? [];
+  const isVideo = file.type.startsWith("video/");
+  const defaultTab = isVideo && highlights.length ? "shorts" : frames.length ? "thumbs" : "chapters";
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -268,8 +271,13 @@ export default function StudioPage() {
       </div>
 
       {phase === "ready" && energy && moments && (
-        <Tabs defaultValue={frames.length ? "thumbs" : "chapters"} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+        <Tabs defaultValue={defaultTab} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
           <TabsList className="mb-4 bg-black/40">
+            {isVideo && (
+              <TabsTrigger value="shorts">
+                <Scissors className="mr-1.5 h-4 w-4" /> Shorts
+              </TabsTrigger>
+            )}
             {frames.length > 0 && (
               <TabsTrigger value="thumbs">
                 <ImageIcon className="mr-1.5 h-4 w-4" /> Miniaturas
@@ -282,6 +290,12 @@ export default function StudioPage() {
               <Terminal className="mr-1.5 h-4 w-4" /> Exportar
             </TabsTrigger>
           </TabsList>
+
+          {isVideo && (
+            <TabsContent value="shorts">
+              <ShortsForge src={src} fileName={file.name} duration={energy.duration} highlights={highlights} z={moments.z} />
+            </TabsContent>
+          )}
 
           {frames.length > 0 && (
             <TabsContent value="thumbs">

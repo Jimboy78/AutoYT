@@ -91,6 +91,8 @@ export function startTask(init: { kind: TaskKind; title: string; projectId?: str
   if (init.cancel) cancels.set(id, init.cancel);
   set([record, ...load()], true);
   const finish = (change: Partial<TaskRecord>) => {
+    // First outcome wins: a late error from work that was already cancelled must not rewrite history.
+    if (load().find((t) => t.id === id)?.status !== "running") return;
     cancels.delete(id);
     patch(id, { ...change, endedAt: Date.now() }, true);
   };

@@ -85,7 +85,12 @@ async function decodeTo16k(blob: Blob) {
 }
 
 function stopWorker() {
-  worker?.terminate();
+  if (worker) {
+    // Terminating a worker that is still importing its chunks fires `error` (NetworkError); detach first.
+    worker.onerror = null;
+    worker.onmessage = null;
+    worker.terminate();
+  }
   worker = null;
 }
 
@@ -109,6 +114,7 @@ export async function startTranscription(projectId: string, opts: { model: strin
   const current = task;
 
   const fail = (err: unknown) => {
+    if (state?.stage === "cancelled" || task !== current) return;
     stopWorker();
     const message = err instanceof Error ? err.message : String(err);
     patch({ stage: "error", error: message });

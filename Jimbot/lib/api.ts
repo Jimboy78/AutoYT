@@ -1,5 +1,60 @@
 // Archivo de utilidades de API. Sin React, sin "use client".
-// Exporta funciones puras para que el hook las consuma.
+// Cliente del router legacy del backend FastAPI (`/api/v1/legacy/*`).
+
+const BASE = process.env.NEXT_PUBLIC_API_BASE?.replace(/\/+$/, "") || "";
+// Seteá NEXT_PUBLIC_API_BASE (ej. http://localhost:8000) para apuntar al backend.
+const LEGACY = "/api/v1/legacy";
+
+export const API_CONFIGURED = BASE !== "";
+
+// ---------- Tipos (espejo de backend/app/schemas/legacy.py) ----------
+
+export interface Video {
+  id: string;
+  filename: string;
+  status: string;
+  url: string;
+  duration?: number | null;
+}
+
+export interface Clip {
+  id: string;
+  video_id?: string;
+  start: number;
+  end: number;
+  url?: string;
+  thumbnail_url?: string | null;
+}
+
+export type JobType = "transcoding" | "clipping" | "thumbnails" | "upload";
+export type JobStatus = "pending" | "processing" | "completed" | "error";
+
+export interface Job {
+  id: string;
+  video_id: string;
+  name: string;
+  type: JobType;
+  status: JobStatus;
+  progress: number;
+  error?: string | null;
+}
+
+export interface Segment {
+  id: string;
+  start: number;
+  end: number;
+  text: string;
+  speaker?: string | null;
+  confidence: number;
+}
+
+export interface Transcription {
+  id: string;
+  video_id: string;
+  language: string;
+  status: JobStatus;
+  segments: Segment[];
+}
 
 export interface InitUploadRequest {
   filename: string;
@@ -12,22 +67,24 @@ export interface InitUploadResponse {
   url: string; // URL firmada/presignada o endpoint de subida
 }
 
-// Agregar el tipo Clip exportado para useClips.ts
-export interface Clip {
+// Estado normalizado de un job para el polling de /processing.
+export interface TaskStatus {
   id: string;
-  start: number;
-  end: number;
-  thumbnail_url?: string;
+  status: "queued" | "running" | "done" | "error";
+  progress: number; // 0..100
+  message?: string | null;
 }
 
-const BASE = process.env.NEXT_PUBLIC_API_BASE?.replace(/\/+$/, "") || "";
-// Si usás Next con route handlers (app/api/*), podés dejar BASE vacío
-// y pegarle a rutas relativas tipo "/api/upload/init".
-// Si tenés backend externo, seteá NEXT_PUBLIC_API_BASE.
+// ---------- Helpers ----------
+
+function apiUrl(path: string) {
+  if (path.startsWith("http")) return path;
+  return `${BASE}${LEGACY}${path}`;
+}
 
 // Helper para fetch JSON con manejo de errores consistente
 async function jsonFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const url = path.startsWith("http") ? path : `${BASE}${path}`;
+  const url = apiUrl(path);
   const res = await fetch(url, {
     ...init,
     headers: {
@@ -44,48 +101,120 @@ async function jsonFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+const id = (value: string) => encodeURIComponent(value);
+
+// ---------- Upload ----------
+
 // 1) Inicializa subida y devuelve uploadId + URL de subida
-export async function initUpload(
-  body: InitUploadRequest
-): Promise<InitUploadResponse> {
-  return jsonFetch<InitUploadResponse>("/api/upload/init", {
+export async function initUpload(body: InitUploadRequest): Promise<InitUploadResponse> {
+  const out = await jsonFetch<InitUploadResponse>("/upload/init", {
     method: "POST",
     body: JSON.stringify(body),
   });
+  // El backend puede devolver una ruta relativa para el PUT directo.
+  return { ...out, url: out.url.startsWith("http") ? out.url : `${BASE}${out.url}` };
 }
 
 // 2) Confirma la subida (el backend crea/atacha el recurso) y devuelve videoId
-export async function confirmUpload(
-  uploadId: string
-): Promise<{ videoId: string }> {
-  return jsonFetch<{ videoId: string }>("/api/upload/confirm", {
+export async function confirmUpload(uploadId: string): Promise<{ videoId: string }> {
+  return jsonFetch<{ videoId: string }>("/upload/confirm", {
     method: "POST",
     body: JSON.stringify({ uploadId }),
   });
 }
 
-// 3) Dispara el procesamiento del video y devuelve taskId
+// 3) Dispara el procesamiento del video y devuelve el id del primer job
 export async function processVideo(videoId: string): Promise<string> {
-  const data = await jsonFetch<{
-    taskId?: string;
-    id?: string;
-    task?: { id?: string };
-  }>(`/api/video/${encodeURIComponent(videoId)}/process`, {
+  const data = await jsonFetch<{ jobIds?: string[]; taskId?: string }>(`/videos/${id(videoId)}/process`, {
     method: "POST",
   });
-  const taskId = data.taskId ?? data.id ?? data.task?.id;
-  if (!taskId) throw new Error("La API no devolvió taskId");
+  const taskId = data.jobIds?.[0] ?? data.taskId;
+  if (!taskId) throw new Error("La API no devolvió jobIds");
   return taskId;
+}
+
+// ---------- Videos / clips ----------
+
+export function listVideos(): Promise<Video[]> {
+  return jsonFetch<Video[]>("/videos");
+}
+
+export function getVideo(videoId: string): Promise<Video> {
+  return jsonFetch<Video>(`/videos/${id(videoId)}`);
+}
+
+export function listClips(videoId: string, opts?: { signal?: AbortSignal }): Promise<Clip[]> {
+  return jsonFetch<Clip[]>(`/videos/${id(videoId)}/clips`, { signal: opts?.signal });
+}
+
+// ---------- Jobs ----------
+
+export function listJobs(): Promise<Job[]> {
+  return jsonFetch<Job[]>("/jobs");
+}
+
+const JOB_STATE: Record<string, TaskStatus["status"]> = {
+  queued: "queued",
+  pending: "queued",
+  running: "running",
+  processing: "running",
+  success: "done",
+  done: "done",
+  completed: "done",
+  failed: "error",
+  error: "error",
+};
+
+export async function getTaskStatus(taskId: string, opts?: { signal?: AbortSignal }): Promise<TaskStatus> {
+  const job = await jsonFetch<Partial<Job> & { id: string; state?: string; message?: string | null }>(
+    `/jobs/${id(taskId)}`,
+    { signal: opts?.signal },
+  );
+  const status = JOB_STATE[(job.status ?? job.state ?? "pending").toLowerCase()] ?? "queued";
+  return {
+    id: String(job.id),
+    status,
+    progress: job.progress ?? (status === "done" ? 100 : 0),
+    message: job.error ?? job.message,
+  };
+}
+
+// ---------- Transcriptions ----------
+
+export function createTranscription(videoId: string, language = "es"): Promise<Transcription> {
+  return jsonFetch<Transcription>(`/transcriptions/${id(videoId)}?language=${id(language)}`, { method: "POST" });
+}
+
+export function getTranscription(videoId: string): Promise<Transcription> {
+  return jsonFetch<Transcription>(`/transcriptions/${id(videoId)}`);
+}
+
+async function downloadText(path: string, filename: string) {
+  const res = await fetch(apiUrl(path));
+  if (!res.ok) throw new Error(`${path} → ${res.status}`);
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export function downloadSRT(videoId: string) {
+  return downloadText(`/transcriptions/${id(videoId)}/srt`, `${videoId}.srt`);
+}
+
+export function downloadVTT(videoId: string) {
+  return downloadText(`/transcriptions/${id(videoId)}/vtt`, `${videoId}.vtt`);
 }
 
 /**
  * (Opcional) Subir usando fetch en vez de XHR.
- * El hook actual usa XHR para progreso; dejá esto por si lo necesitás server-side o sin progreso.
  */
 export async function uploadToBackend(
   url: string,
   file: Blob | File,
-  opts?: { method?: string; headers?: Record<string, string> }
+  opts?: { method?: string; headers?: Record<string, string> },
 ): Promise<Response> {
   const res = await fetch(url, {
     method: opts?.method ?? "PUT",
@@ -97,15 +226,4 @@ export async function uploadToBackend(
   });
   if (!res.ok) throw new Error(`uploadToBackend → ${res.status}`);
   return res;
-}
-
-// Exportar listClips para useClips.ts
-export async function listClips(
-  videoId: string,
-  opts?: { signal?: AbortSignal }
-): Promise<Clip[]> {
-  return jsonFetch<Clip[]>(`/api/video/${encodeURIComponent(videoId)}/clips`, {
-    method: "GET",
-    signal: opts?.signal,
-  });
 }

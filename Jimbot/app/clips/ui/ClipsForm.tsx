@@ -51,12 +51,12 @@ export function ClipsForm({
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-cyan-400">Galería de Clips</h1>
+        <h1 className="text-3xl font-bold text-rose-400">Galería de Clips</h1>
         <p className="text-gray-400">Explora y gestiona tus clips generados</p>
       </div>
 
       {/* Filtros y búsqueda */}
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="bg-zinc-800 border-zinc-700">
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
@@ -65,14 +65,14 @@ export function ClipsForm({
                 placeholder="Buscar clips por título o tags..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-slate-700 border-slate-600 text-gray-100"
+                className="pl-10 bg-zinc-700 border-zinc-600 text-gray-100"
               />
             </div>
             <div className="flex gap-2">
               <select
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value as any)}
-                className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-gray-100"
+                className="px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-gray-100"
               >
                 <option value="">Todos los tipos</option>
                 <option value="gameplay">Gameplay</option>
@@ -83,19 +83,19 @@ export function ClipsForm({
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-gray-100"
+                className="px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-gray-100"
               >
                 <option value="recent">Más recientes</option>
                 <option value="views">Más vistas</option>
                 <option value="rating">Mejor valorados</option>
               </select>
-              <div className="flex border border-slate-600 rounded-md overflow-hidden">
+              <div className="flex border border-zinc-600 rounded-md overflow-hidden">
                 <Button
                   variant={viewMode === "grid" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("grid")}
                   className={
-                    viewMode === "grid" ? "bg-cyan-600" : "hover:bg-slate-700"
+                    viewMode === "grid" ? "bg-rose-600" : "hover:bg-zinc-700"
                   }
                 >
                   <Grid3X3 className="h-4 w-4" />
@@ -105,7 +105,7 @@ export function ClipsForm({
                   size="sm"
                   onClick={() => setViewMode("list")}
                   className={
-                    viewMode === "list" ? "bg-cyan-600" : "hover:bg-slate-700"
+                    viewMode === "list" ? "bg-rose-600" : "hover:bg-zinc-700"
                   }
                 >
                   <List className="h-4 w-4" />
@@ -127,7 +127,7 @@ export function ClipsForm({
           {filteredClips.map((clip) => (
             <Card
               key={clip.id}
-              className="bg-slate-800 border-slate-700 hover:border-cyan-500 group"
+              className="bg-zinc-800 border-zinc-700 hover:border-rose-500 group"
             >
               <div className="relative">
                 <Image
@@ -138,7 +138,7 @@ export function ClipsForm({
                   className="w-full h-48 object-cover rounded-t-lg"
                 />
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Button size="sm" className="bg-cyan-600 hover:bg-cyan-700">
+                  <Button size="sm" className="bg-rose-600 hover:bg-rose-700">
                     <Play className="h-4 w-4 mr-2" />
                     Reproducir
                   </Button>
@@ -163,7 +163,7 @@ export function ClipsForm({
                     <Badge
                       key={tag}
                       variant="outline"
-                      className="text-xs border-slate-600 text-gray-400"
+                      className="text-xs border-zinc-600 text-gray-400"
                     >
                       {tag}
                     </Badge>
@@ -187,21 +187,21 @@ export function ClipsForm({
                 <div className="flex gap-2">
                   <Button
                     size="sm"
-                    className="flex-1 bg-cyan-600 hover:bg-cyan-700"
+                    className="flex-1 bg-rose-600 hover:bg-rose-700"
                   >
                     <Play className="h-3 w-3 mr-1" /> Ver
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
-                    className="border-slate-600 hover:bg-slate-700"
+                    className="border-zinc-600 hover:bg-zinc-700"
                   >
                     <Download className="h-3 w-3" />
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
-                    className="border-slate-600 hover:bg-slate-700"
+                    className="border-zinc-600 hover:bg-zinc-700"
                   >
                     <Share2 className="h-3 w-3" />
                   </Button>
@@ -216,9 +216,9 @@ export function ClipsForm({
       )}
 
       {filteredClips.length === 0 && (
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="bg-zinc-800 border-zinc-700">
           <CardContent className="p-8 text-center space-y-4">
-            <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center">
+            <div className="mx-auto h-16 w-16 rounded-full bg-zinc-700 flex items-center justify-center">
               <Grid3X3 className="h-8 w-8 text-gray-400" />
             </div>
             <h3 className="text-lg font-semibold text-gray-300">
@@ -230,7 +230,7 @@ export function ClipsForm({
                 : "Aún no tienes clips generados. ¡Sube un video para comenzar!"}
             </p>
             {!searchTerm && !selectedType && (
-              <Button className="bg-cyan-600 hover:bg-cyan-700">
+              <Button className="bg-rose-600 hover:bg-rose-700">
                 <Upload className="h-4 w-4 mr-2" /> Subir Video
               </Button>
             )}

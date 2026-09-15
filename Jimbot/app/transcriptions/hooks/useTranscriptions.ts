@@ -77,7 +77,7 @@ export function useTranscriptions() {
             startTime: s.start,
             endTime: s.end,
             text: s.text,
-            speaker: s.speaker,
+            speaker: s.speaker ?? undefined,
             confidence: s.confidence,
           }))
         );

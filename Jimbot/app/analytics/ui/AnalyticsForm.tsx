@@ -71,7 +71,7 @@ export function AnalyticsForm({
     <div className="space-y-6">
       {/* Título */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-cyan-400">Analytics & Alerts</h1>
+        <h1 className="text-3xl font-bold text-rose-400">Analytics & Alerts</h1>
         <p className="text-gray-400">
           Monitorea el rendimiento de tus videos y recibe alertas importantes
         </p>
@@ -79,10 +79,10 @@ export function AnalyticsForm({
 
       {/* Alertas */}
       {unreadAlerts.length > 0 && (
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="bg-zinc-800 border-zinc-700">
           <CardHeader className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-cyan-400">
+              <CardTitle className="flex items-center gap-2 text-rose-400">
                 <Bell className="h-5 w-5" /> Alertas Recientes
               </CardTitle>
               <CardDescription className="text-gray-400">
@@ -93,7 +93,7 @@ export function AnalyticsForm({
               variant="outline"
               size="sm"
               onClick={() => setShowAllAlerts(!showAllAlerts)}
-              className="border-cyan-500 text-cyan-400 hover:bg-cyan-600"
+              className="border-rose-500 text-rose-400 hover:bg-rose-600"
             >
               {showAllAlerts ? "Ocultar" : "Ver todas"}
             </Button>
@@ -142,13 +142,13 @@ export function AnalyticsForm({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           {
-            icon: <Eye className="h-6 w-6 text-cyan-400" />,
+            icon: <Eye className="h-6 w-6 text-rose-400" />,
             value: formatNumber(totalViews),
             label: "Total Visualizaciones",
             deltaIcon: <TrendingUp className="h-3 w-3 text-green-400" />,
             delta: "+12.5%",
-            background: "bg-cyan-600/20",
-            color: "text-cyan-400",
+            background: "bg-rose-600/20",
+            color: "text-rose-400",
           },
           {
             icon: <Clock className="h-6 w-6 text-purple-400" />,
@@ -178,7 +178,7 @@ export function AnalyticsForm({
             color: "text-green-400",
           },
         ].map((stat, idx) => (
-          <Card key={idx} className="bg-slate-800 border-slate-700">
+          <Card key={idx} className="bg-zinc-800 border-zinc-700">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${stat.background}`}>

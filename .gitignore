@@ -10,3 +10,9 @@ __pycache__/
 *.sqlite3
 uploads/
 .pytest_cache/
+
+# Accidentally committed virtualenv
+backend/Lib/
+backend/Scripts/
+backend/pyvenv.cfg
+.vercel

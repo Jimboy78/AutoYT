@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { useParams } from "next/navigation";
 import {
   getVideo,
   listClips,
@@ -13,11 +14,8 @@ import {
   type Job,
 } from "@/lib/api";
 
-export default function VideoDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function VideoDetailPage() {
+  const params = useParams<{ id: string }>();
   const id = decodeURIComponent(params.id);
   const [video, setVideo] = useState<Video | null>(null);
   const [clips, setClips] = useState<Clip[]>([]);

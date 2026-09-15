@@ -6,6 +6,7 @@ from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 import os, uuid, time, threading
+from urllib.parse import quote
 from typing import Optional, List
 
 from ...db import get_db, SessionLocal, Base, engine
@@ -217,8 +218,8 @@ def get_clips(video_id: str, db: Session = Depends(get_db)):
 def init_upload_compat(req: InitUploadIn, request: Request):
     if not req.filename: raise HTTPException(400, "filename requerido")
     upload_id = str(uuid.uuid4()); _pending_uploads[upload_id] = req.filename
-    base = str(request.base_url).rstrip("/")
-    url = f"{base}{router.prefix}/upload/direct/{upload_id}?filename={req.filename}"
+    # url_for resolves the full mounted path (/api/v1/legacy/...), not just the router prefix.
+    url = f"{request.url_for('direct_put', upload_id=upload_id)}?filename={quote(req.filename)}"
     return InitUploadOut(uploadId=upload_id, url=url)
 
 @router.put("/upload/direct/{upload_id}", deprecated=True)

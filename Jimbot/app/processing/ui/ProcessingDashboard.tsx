@@ -55,7 +55,7 @@ const taskLabels = {
 
 const statusColors = {
   pending: "bg-gray-500",
-  processing: "bg-cyan-500",
+  processing: "bg-rose-500",
   completed: "bg-green-500",
   error: "bg-red-500",
 };
@@ -82,7 +82,7 @@ export function ProcessingDashboard({
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-cyan-400">
+        <h1 className="text-3xl font-bold text-rose-400">
           Dashboard de Procesamiento
         </h1>
         <p className="text-gray-400">
@@ -91,9 +91,9 @@ export function ProcessingDashboard({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="bg-zinc-800 border-zinc-700">
           <CardContent className="p-4 flex items-center gap-3">
-            <Activity className="h-8 w-8 text-cyan-400" />
+            <Activity className="h-8 w-8 text-rose-400" />
             <div>
               <p className="text-2xl font-bold">
                 {tasks.filter((t) => t.status === "processing").length}
@@ -103,7 +103,7 @@ export function ProcessingDashboard({
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="bg-zinc-800 border-zinc-700">
           <CardContent className="p-4 flex items-center gap-3">
             <CheckCircle className="h-8 w-8 text-green-400" />
             <div>
@@ -113,7 +113,7 @@ export function ProcessingDashboard({
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="bg-zinc-800 border-zinc-700">
           <CardContent className="p-4 flex items-center gap-3">
             <Clock className="h-8 w-8 text-yellow-400" />
             <div>
@@ -125,7 +125,7 @@ export function ProcessingDashboard({
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="bg-zinc-800 border-zinc-700">
           <CardContent className="p-4 flex items-center gap-3">
             <AlertCircle className="h-8 w-8 text-red-400" />
             <div>
@@ -138,10 +138,10 @@ export function ProcessingDashboard({
         </Card>
       </div>
 
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="bg-zinc-800 border-zinc-700">
         <CardHeader className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-cyan-400">Progreso General</CardTitle>
+            <CardTitle className="text-rose-400">Progreso General</CardTitle>
             <CardDescription className="text-gray-400">
               {completedTasks} de {totalTasks} tareas completadas
             </CardDescription>
@@ -149,7 +149,7 @@ export function ProcessingDashboard({
           <Button
             onClick={pauseAll}
             variant="outline"
-            className="border-cyan-500 text-cyan-400 hover:bg-cyan-600 hover:text-white"
+            className="border-rose-500 text-rose-400 hover:bg-rose-600 hover:text-white"
           >
             {isPaused ? (
               <Play className="h-4 w-4 mr-2" />
@@ -170,7 +170,7 @@ export function ProcessingDashboard({
             ) && (
               <div className="mt-4">
                 <Button
-                  className="bg-cyan-600 hover:bg-cyan-700"
+                  className="bg-rose-600 hover:bg-rose-700"
                   onClick={() => {
                     window.location.href = `/clips?videoId=${encodeURIComponent(
                       videoId
@@ -184,9 +184,9 @@ export function ProcessingDashboard({
         </CardContent>
       </Card>
 
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="bg-zinc-800 border-zinc-700">
         <CardHeader>
-          <CardTitle className="text-cyan-400">Tareas Activas</CardTitle>
+          <CardTitle className="text-rose-400">Tareas Activas</CardTitle>
           <CardDescription className="text-gray-400">
             Estado detallado de cada proceso
           </CardDescription>
@@ -198,11 +198,11 @@ export function ProcessingDashboard({
             return (
               <div
                 key={task.id}
-                className="border border-slate-600 rounded-lg p-4"
+                className="border border-zinc-600 rounded-lg p-4"
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <Icon className="h-5 w-5 text-cyan-400" />
+                    <Icon className="h-5 w-5 text-rose-400" />
                     <div>
                       <p className="font-medium">{task.name}</p>
                       <p className="text-sm text-gray-400">
@@ -221,7 +221,7 @@ export function ProcessingDashboard({
                         size="sm"
                         variant="outline"
                         onClick={() => retryTask(task.id)}
-                        className="border-cyan-500 text-cyan-400 hover:bg-cyan-600 hover:text-white"
+                        className="border-rose-500 text-rose-400 hover:bg-rose-600 hover:text-white"
                       >
                         <RotateCcw className="h-3 w-3 mr-1" />
                         Reintentar

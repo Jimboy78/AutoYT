@@ -44,7 +44,7 @@ export function EditTypeForm({
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-cyan-400">Tipo de Edición</h1>
+        <h1 className="text-3xl font-bold text-rose-400">Tipo de Edición</h1>
         <p className="text-gray-400">
           Selecciona el tipo de contenido que quieres editar
         </p>
@@ -60,8 +60,8 @@ export function EditTypeForm({
               key={type.id}
               className={`cursor-pointer transition-all duration-200 ${
                 isSelected
-                  ? "bg-cyan-600/20 border-cyan-500 ring-2 ring-cyan-500/50"
-                  : "bg-slate-800 border-slate-700 hover:border-cyan-500"
+                  ? "bg-rose-600/20 border-rose-500 ring-2 ring-rose-500/50"
+                  : "bg-zinc-800 border-zinc-700 hover:border-rose-500"
               }`}
               onClick={() => setSelectedType(type.id)}
             >
@@ -69,17 +69,17 @@ export function EditTypeForm({
                 <div className="flex items-center justify-between">
                   <Icon
                     className={`h-8 w-8 ${
-                      isSelected ? "text-cyan-400" : "text-gray-400"
+                      isSelected ? "text-rose-400" : "text-gray-400"
                     }`}
                   />
                   {type.recommended && (
-                    <Badge className="bg-cyan-600 text-white">
+                    <Badge className="bg-rose-600 text-white">
                       Recomendado
                     </Badge>
                   )}
                 </div>
                 <CardTitle
-                  className={isSelected ? "text-cyan-400" : "text-gray-100"}
+                  className={isSelected ? "text-rose-400" : "text-gray-100"}
                 >
                   {type.title}
                 </CardTitle>
@@ -98,7 +98,7 @@ export function EditTypeForm({
                         key={idx}
                         className="text-sm text-gray-400 flex items-center gap-2"
                       >
-                        <div className="h-1.5 w-1.5 rounded-full bg-cyan-500" />
+                        <div className="h-1.5 w-1.5 rounded-full bg-rose-500" />
                         {feature}
                       </li>
                     ))}
@@ -111,9 +111,9 @@ export function EditTypeForm({
       </div>
 
       {selectedType && (
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="bg-zinc-800 border-zinc-700">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-cyan-400">
+            <CardTitle className="flex items-center gap-2 text-rose-400">
               <Settings className="h-5 w-5" />
               Configuración Avanzada
             </CardTitle>
@@ -126,7 +126,7 @@ export function EditTypeForm({
               {/* Zoom */}
               <div className="space-y-3">
                 <Label className="text-gray-300 flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-cyan-400" />
+                  <Zap className="h-4 w-4 text-rose-400" />
                   Nivel de Zoom: {zoomLevel}%
                 </Label>
                 <Slider
@@ -145,7 +145,7 @@ export function EditTypeForm({
               {/* Duración */}
               <div className="space-y-3">
                 <Label className="text-gray-300 flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-cyan-400" />
+                  <Clock className="h-4 w-4 text-rose-400" />
                   Duración Objetivo
                 </Label>
                 <div className="flex items-center gap-2">
@@ -161,7 +161,7 @@ export function EditTypeForm({
                     type="number"
                     value={targetDuration}
                     onChange={(e) => setTargetDuration(+e.target.value)}
-                    className="w-20 bg-slate-700 border-slate-600"
+                    className="w-20 bg-zinc-700 border-zinc-600"
                   />
                   <span className="text-sm text-gray-400">seg</span>
                 </div>
@@ -173,7 +173,7 @@ export function EditTypeForm({
               {/* Silencio */}
               <div className="space-y-3">
                 <Label className="text-gray-300 flex items-center gap-2">
-                  <Volume2 className="h-4 w-4 text-cyan-400" />
+                  <Volume2 className="h-4 w-4 text-rose-400" />
                   Umbral de Silencio: {silenceThreshold}%
                 </Label>
                 <Slider
@@ -192,7 +192,7 @@ export function EditTypeForm({
               {/* Habla */}
               <div className="space-y-3">
                 <Label className="text-gray-300 flex items-center gap-2">
-                  <Volume2 className="h-4 w-4 text-cyan-400" />
+                  <Volume2 className="h-4 w-4 text-rose-400" />
                   Umbral de Habla: {speechThreshold}%
                 </Label>
                 <Slider
@@ -212,14 +212,14 @@ export function EditTypeForm({
             <div className="flex gap-4 pt-4">
               <Button
                 onClick={handleContinue}
-                className="bg-cyan-600 hover:bg-cyan-700"
+                className="bg-rose-600 hover:bg-rose-700"
                 disabled={!selectedType}
               >
                 Continuar con Edición
               </Button>
               <Button
                 variant="outline"
-                className="border-slate-600 text-gray-400 hover:bg-slate-700"
+                className="border-zinc-600 text-gray-400 hover:bg-zinc-700"
               >
                 Guardar Configuración
               </Button>

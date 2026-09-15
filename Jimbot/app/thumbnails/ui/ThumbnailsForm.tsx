@@ -72,7 +72,7 @@ export function ThumbnailsForm({
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-cyan-400">
+        <h1 className="text-3xl font-bold text-rose-400">
           Generador de Miniaturas IA
         </h1>
         <p className="text-gray-400">
@@ -84,9 +84,9 @@ export function ThumbnailsForm({
         {/* Panel de configuración */}
         <div className="lg:col-span-2 space-y-6">
           {/* Selección de template */}
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-zinc-800 border-zinc-700">
             <CardHeader>
-              <CardTitle className="text-cyan-400">
+              <CardTitle className="text-rose-400">
                 Seleccionar Estilo
               </CardTitle>
               <CardDescription className="text-gray-400">
@@ -102,8 +102,8 @@ export function ThumbnailsForm({
                       key={template.id}
                       className={`cursor-pointer transition-all duration-200 ${
                         isSel
-                          ? "bg-cyan-600/20 border-cyan-500 ring-2 ring-cyan-500/50"
-                          : "bg-slate-700 border-slate-600 hover:border-cyan-500"
+                          ? "bg-rose-600/20 border-rose-500 ring-2 ring-rose-500/50"
+                          : "bg-zinc-700 border-zinc-600 hover:border-rose-500"
                       }`}
                       onClick={() => setSelectedTemplate(template.id)}
                     >
@@ -117,7 +117,7 @@ export function ThumbnailsForm({
                         />
                         <h3
                           className={`font-semibold text-sm ${
-                            isSel ? "text-cyan-400" : "text-gray-100"
+                            isSel ? "text-rose-400" : "text-gray-100"
                           }`}
                         >
                           {template.name}
@@ -134,9 +134,9 @@ export function ThumbnailsForm({
           </Card>
 
           {/* Configuración de contenido */}
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-zinc-800 border-zinc-700">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-cyan-400">
+              <CardTitle className="flex items-center gap-2 text-rose-400">
                 <Wand2 className="h-5 w-5" />
                 Configuración de Contenido
               </CardTitle>
@@ -148,10 +148,10 @@ export function ThumbnailsForm({
               {/* Fotograma clave */}
               <div className="space-y-2">
                 <Label className="text-gray-300 flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4 text-cyan-400" />
+                  <ImageIcon className="h-4 w-4 text-rose-400" />
                   Fotograma Clave (Opcional)
                 </Label>
-                <div className="border-2 border-dashed border-slate-600 rounded-lg p-4 text-center hover:border-cyan-500 transition-colors">
+                <div className="border-2 border-dashed border-zinc-600 rounded-lg p-4 text-center hover:border-rose-500 transition-colors">
                   <input
                     type="file"
                     accept="image/*"
@@ -162,8 +162,8 @@ export function ThumbnailsForm({
                   <label htmlFor="keyframe-upload" className="cursor-pointer">
                     {keyFrame ? (
                       <div className="space-y-2">
-                        <ImageIcon className="mx-auto h-8 w-8 text-cyan-400" />
-                        <p className="text-sm text-cyan-400">{keyFrame.name}</p>
+                        <ImageIcon className="mx-auto h-8 w-8 text-rose-400" />
+                        <p className="text-sm text-rose-400">{keyFrame.name}</p>
                         <p className="text-xs text-gray-400">
                           Haz clic para cambiar
                         </p>
@@ -186,14 +186,14 @@ export function ThumbnailsForm({
               {/* Prompt IA */}
               <div className="space-y-2">
                 <Label className="text-gray-300 flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-cyan-400" />
+                  <Sparkles className="h-4 w-4 text-rose-400" />
                   Descripción para IA
                 </Label>
                 <Textarea
                   placeholder="Describe lo que quieres en tu miniatura..."
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  className="bg-slate-700 border-slate-600 text-gray-100 min-h-20"
+                  className="bg-zinc-700 border-zinc-600 text-gray-100 min-h-20"
                 />
                 <p className="text-xs text-gray-400">
                   Sé específico para mejores resultados
@@ -203,21 +203,21 @@ export function ThumbnailsForm({
               {/* Overlay text */}
               <div className="space-y-2">
                 <Label className="text-gray-300 flex items-center gap-2">
-                  <Type className="h-4 w-4 text-cyan-400" />
+                  <Type className="h-4 w-4 text-rose-400" />
                   Texto de Overlay
                 </Label>
                 <Input
                   placeholder="¡ÉPICO! | INCREÍBLE JUGADA"
                   value={overlayText}
                   onChange={(e) => setOverlayText(e.target.value)}
-                  className="bg-slate-700 border-slate-600 text-gray-100"
+                  className="bg-zinc-700 border-zinc-600 text-gray-100"
                 />
               </div>
 
               {/* Tema */}
               <div className="space-y-2">
                 <Label className="text-gray-300 flex items-center gap-2">
-                  <Palette className="h-4 w-4 text-cyan-400" />
+                  <Palette className="h-4 w-4 text-rose-400" />
                   Tema de Color
                 </Label>
                 <div className="grid grid-cols-3 gap-2">
@@ -229,8 +229,8 @@ export function ThumbnailsForm({
                         variant={isSel ? "default" : "outline"}
                         className={`h-12 ${
                           isSel
-                            ? "bg-cyan-600 hover:bg-cyan-700"
-                            : "border-slate-600 hover:bg-slate-700"
+                            ? "bg-rose-600 hover:bg-rose-700"
+                            : "border-zinc-600 hover:bg-zinc-700"
                         }`}
                         onClick={() => setSelectedTheme(theme.id)}
                       >
@@ -249,7 +249,7 @@ export function ThumbnailsForm({
               <Button
                 onClick={generateThumbnail}
                 disabled={!selectedTemplate || !prompt || isGenerating}
-                className="w-full bg-cyan-600 hover:bg-cyan-700"
+                className="w-full bg-rose-600 hover:bg-rose-700"
               >
                 <Wand2 className="h-4 w-4 mr-2" />
                 {isGenerating ? "Generando..." : "Generar Miniatura"}
@@ -260,15 +260,15 @@ export function ThumbnailsForm({
 
         {/* Vista previa y resultados */}
         <div className="space-y-6">
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-zinc-800 border-zinc-700">
             <CardHeader>
-              <CardTitle className="text-cyan-400">Vista Previa</CardTitle>
+              <CardTitle className="text-rose-400">Vista Previa</CardTitle>
               <CardDescription className="text-gray-400">
                 Configuración actual
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="aspect-video bg-slate-900 rounded-lg flex items-center justify-center border border-slate-600">
+              <div className="aspect-video bg-zinc-900 rounded-lg flex items-center justify-center border border-zinc-600">
                 {selectedTemplate ? (
                   <div className="text-center p-4">
                     <div
@@ -282,7 +282,7 @@ export function ThumbnailsForm({
                       {templates.find((t) => t.id === selectedTemplate)?.name}
                     </p>
                     {overlayText && (
-                      <p className="text-xs text-cyan-400 font-bold">
+                      <p className="text-xs text-rose-400 font-bold">
                         {overlayText}
                       </p>
                     )}
@@ -307,7 +307,7 @@ export function ThumbnailsForm({
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-400">Template:</span>
-                  <span className="text-cyan-400">
+                  <span className="text-rose-400">
                     {selectedTemplate
                       ? templates.find((t) => t.id === selectedTemplate)?.name
                       : "Ninguno"}
@@ -315,13 +315,13 @@ export function ThumbnailsForm({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Tema:</span>
-                  <span className="text-cyan-400">
+                  <span className="text-rose-400">
                     {themes.find((t) => t.id === selectedTheme)?.name}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Fotograma:</span>
-                  <span className="text-cyan-400">
+                  <span className="text-rose-400">
                     {keyFrame ? "Subido" : "No"}
                   </span>
                 </div>
@@ -329,26 +329,26 @@ export function ThumbnailsForm({
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-zinc-800 border-zinc-700">
             <CardHeader>
-              <CardTitle className="text-cyan-400">Estadísticas</CardTitle>
+              <CardTitle className="text-rose-400">Estadísticas</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-400">Generadas hoy:</span>
-                <span className="text-cyan-400">
+                <span className="text-rose-400">
                   {generatedThumbnails.length}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Templates usados:</span>
-                <span className="text-cyan-400">
+                <span className="text-rose-400">
                   {new Set(generatedThumbnails.map((t) => t.style)).size}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Tiempo promedio:</span>
-                <span className="text-cyan-400">~15s</span>
+                <span className="text-rose-400">~15s</span>
               </div>
             </CardContent>
           </Card>
@@ -357,9 +357,9 @@ export function ThumbnailsForm({
 
       {/* Galería */}
       {generatedThumbnails.length > 0 && (
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="bg-zinc-800 border-zinc-700">
           <CardHeader>
-            <CardTitle className="text-cyan-400">
+            <CardTitle className="text-rose-400">
               Miniaturas Generadas
             </CardTitle>
             <CardDescription className="text-gray-400">
@@ -369,12 +369,12 @@ export function ThumbnailsForm({
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {generatedThumbnails.map((thumb) => (
-                <Card key={thumb.id} className="bg-slate-700 border-slate-600">
+                <Card key={thumb.id} className="bg-zinc-700 border-zinc-600">
                   <CardContent className="p-3">
-                    <div className="aspect-video bg-slate-900 rounded mb-3 overflow-hidden">
+                    <div className="aspect-video bg-zinc-900 rounded mb-3 overflow-hidden">
                       {thumb.isGenerating ? (
                         <div className="h-full flex flex-col items-center justify-center">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400 mb-2" />
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-400 mb-2" />
                           <Progress
                             value={thumb.progress || 0}
                             className="w-20 h-1"
@@ -397,7 +397,7 @@ export function ThumbnailsForm({
                       <div className="flex items-center justify-between">
                         <Badge
                           variant="outline"
-                          className="text-xs border-slate-500 text-gray-400"
+                          className="text-xs border-zinc-500 text-gray-400"
                         >
                           {templates.find((t) => t.id === thumb.style)?.name}
                         </Badge>
@@ -412,7 +412,7 @@ export function ThumbnailsForm({
                         <div className="flex gap-1">
                           <Button
                             size="sm"
-                            className="flex-1 bg-cyan-600 hover:bg-cyan-700"
+                            className="flex-1 bg-rose-600 hover:bg-rose-700"
                           >
                             <Download className="h-3 w-3 mr-1" />
                             Descargar
@@ -420,7 +420,7 @@ export function ThumbnailsForm({
                           <Button
                             size="sm"
                             variant="outline"
-                            className="border-slate-600 hover:bg-slate-600"
+                            className="border-zinc-600 hover:bg-zinc-600"
                             onClick={() => regenerateThumbnail(thumb.id)}
                           >
                             <RefreshCw className="h-3 w-3" />

@@ -92,7 +92,7 @@ export function YouTubeForm({
       {/* ... aquí va TODO tu JSX original, usando las props en lugar de hooks */}
       {/* Por ejemplo: */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-cyan-400">
+        <h1 className="text-3xl font-bold text-rose-400">
           Integración YouTube
         </h1>
         <p className="text-gray-400">
@@ -101,9 +101,9 @@ export function YouTubeForm({
       </div>
 
       {/* Conexión */}
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="bg-zinc-800 border-zinc-700">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-cyan-400">
+          <CardTitle className="flex items-center gap-2 text-rose-400">
             <Youtube className="h-5 w-5" />
             Estado de Conexión
           </CardTitle>
@@ -144,7 +144,7 @@ export function YouTubeForm({
 
       {/* Lista de videos */}
       {videos.length > 0 && (
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="bg-zinc-800 border-zinc-700">
           {/* ... map videos usando formatNumber, getStatusColor, getStatusLabel ... */}
         </Card>
       )}

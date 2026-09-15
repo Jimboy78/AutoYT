@@ -85,7 +85,7 @@ export function EditorForm({
     <div className="space-y-6">
       {/* Título */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-cyan-400">
+        <h1 className="text-3xl font-bold text-rose-400">
           Editor de Ritmo y Transiciones
         </h1>
         <p className="text-gray-400">
@@ -94,20 +94,20 @@ export function EditorForm({
       </div>
 
       {/* Controles de reproducción */}
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="bg-zinc-800 border-zinc-700">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               <Button
                 variant="outline"
                 size="sm"
-                className="border-cyan-500 text-cyan-400 hover:bg-cyan-600"
+                className="border-rose-500 text-rose-400 hover:bg-rose-600"
               >
                 <SkipBack className="h-4 w-4" />
               </Button>
               <Button
                 onClick={() => setIsPlaying(!isPlaying)}
-                className="bg-cyan-600 hover:bg-cyan-700"
+                className="bg-rose-600 hover:bg-rose-700"
               >
                 {isPlaying ? (
                   <Pause className="h-4 w-4" />
@@ -118,14 +118,14 @@ export function EditorForm({
               <Button
                 variant="outline"
                 size="sm"
-                className="border-cyan-500 text-cyan-400 hover:bg-cyan-600"
+                className="border-rose-500 text-rose-400 hover:bg-rose-600"
               >
                 <SkipForward className="h-4 w-4" />
               </Button>
             </div>
 
             <div className="text-center">
-              <div className="text-2xl font-mono text-cyan-400">
+              <div className="text-2xl font-mono text-rose-400">
                 {formatTime(currentTime)} / {formatTime(totalDuration)}
               </div>
               <div className="text-sm text-gray-400">
@@ -150,7 +150,7 @@ export function EditorForm({
           </div>
 
           {/* Timeline */}
-          <div className="relative bg-slate-900 rounded-lg p-4 min-h-32">
+          <div className="relative bg-zinc-900 rounded-lg p-4 min-h-32">
             <div className="absolute top-2 left-4 text-xs text-gray-400">
               Timeline
             </div>
@@ -162,7 +162,7 @@ export function EditorForm({
                 )
               )}
             </div>
-            <div className="relative h-16 bg-slate-800 rounded border border-slate-600">
+            <div className="relative h-16 bg-zinc-800 rounded border border-zinc-600">
               {clips.map((clip) => {
                 const widthP = (clip.duration / totalDuration) * 100;
                 const leftP = (clip.startTime / totalDuration) * 100;
@@ -177,11 +177,11 @@ export function EditorForm({
                     key={clip.id}
                     className={`absolute top-1 h-14 rounded cursor-pointer transition-all ${
                       selectedClip === clip.id
-                        ? "ring-2 ring-cyan-500 z-10"
-                        : "hover:ring-1 hover:ring-cyan-400"
+                        ? "ring-2 ring-rose-500 z-10"
+                        : "hover:ring-1 hover:ring-rose-400"
                     } ${
                       clip.type === "video"
-                        ? "bg-cyan-600"
+                        ? "bg-rose-600"
                         : clip.type === "transition"
                         ? "bg-purple-600"
                         : "bg-green-600"
@@ -221,9 +221,9 @@ export function EditorForm({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Panel de propiedades */}
         <div className="lg:col-span-2">
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-zinc-800 border-zinc-700">
             <CardHeader>
-              <CardTitle className="text-cyan-400">
+              <CardTitle className="text-rose-400">
                 {selectedClipData
                   ? `Editando: ${selectedClipData.title}`
                   : "Selecciona un clip"}
@@ -238,7 +238,7 @@ export function EditorForm({
                   {/* Velocidad */}
                   <div className="space-y-3">
                     <Label className="text-gray-300 flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-cyan-400" />
+                      <Zap className="h-4 w-4 text-rose-400" />
                       Velocidad: {selectedClipData.speed}x
                     </Label>
                     <Slider
@@ -273,8 +273,8 @@ export function EditorForm({
                             variant={isSel ? "default" : "outline"}
                             className={`flex flex-col gap-2 h-16 ${
                               isSel
-                                ? "bg-cyan-600 hover:bg-cyan-700"
-                                : "border-slate-600 hover:bg-slate-700"
+                                ? "bg-rose-600 hover:bg-rose-700"
+                                : "border-zinc-600 hover:bg-zinc-700"
                             }`}
                             onClick={() =>
                               updateClipTransition(selectedClipData.id, t.id)
@@ -289,16 +289,16 @@ export function EditorForm({
                   </div>
 
                   {/* Info */}
-                  <div className="grid grid-cols-2 gap-4 p-4 bg-slate-900 rounded-lg">
+                  <div className="grid grid-cols-2 gap-4 p-4 bg-zinc-900 rounded-lg">
                     <div>
                       <Label className="text-gray-400">Duración</Label>
-                      <p className="text-lg font-mono text-cyan-400">
+                      <p className="text-lg font-mono text-rose-400">
                         {formatTime(selectedClipData.duration)}
                       </p>
                     </div>
                     <div>
                       <Label className="text-gray-400">Posición</Label>
-                      <p className="text-lg font-mono text-cyan-400">
+                      <p className="text-lg font-mono text-rose-400">
                         {formatTime(selectedClipData.startTime)}
                       </p>
                     </div>
@@ -318,7 +318,7 @@ export function EditorForm({
                 </>
               ) : (
                 <div className="text-center py-8">
-                  <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
+                  <div className="mx-auto h-16 w-16 rounded-full bg-zinc-700 flex items-center justify-center mb-4">
                     <Scissors className="h-8 w-8 text-gray-400" />
                   </div>
                   <p className="text-gray-400">
@@ -332,9 +332,9 @@ export function EditorForm({
 
         {/* Panel de música y stats */}
         <div>
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-zinc-800 border-zinc-700">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-cyan-400">
+              <CardTitle className="flex items-center gap-2 text-rose-400">
                 <Music className="h-5 w-5" /> Música de Fondo
               </CardTitle>
               <CardDescription className="text-gray-400">
@@ -348,7 +348,7 @@ export function EditorForm({
                 <select
                   value={selectedMusic}
                   onChange={(e) => setSelectedMusic(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-gray-100"
+                  className="w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-gray-100"
                 >
                   <option value="">Sin música</option>
                   {musicTracks.map((t) => (
@@ -361,7 +361,7 @@ export function EditorForm({
 
               {selectedMusic && (
                 <>
-                  <div className="p-3 bg-slate-900 rounded-lg">
+                  <div className="p-3 bg-zinc-900 rounded-lg">
                     {(() => {
                       const tr = musicTracks.find(
                         (m) => m.id === selectedMusic
@@ -370,11 +370,11 @@ export function EditorForm({
                         <div className="space-y-2">
                           <div className="flex justify-between">
                             <span className="text-gray-400">BPM:</span>
-                            <span className="text-cyan-400">{tr.bpm}</span>
+                            <span className="text-rose-400">{tr.bpm}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-gray-400">Duración:</span>
-                            <span className="text-cyan-400">
+                            <span className="text-rose-400">
                               {formatTime(tr.duration)}
                             </span>
                           </div>
@@ -389,15 +389,15 @@ export function EditorForm({
                       size="sm"
                       variant={bpmSync ? "default" : "outline"}
                       onClick={() => setBpmSync(!bpmSync)}
-                      className={bpmSync ? "bg-cyan-600" : "border-slate-600"}
+                      className={bpmSync ? "bg-rose-600" : "border-zinc-600"}
                     >
                       {bpmSync ? "Activado" : "Desactivado"}
                     </Button>
                   </div>
 
                   {bpmSync && (
-                    <div className="p-3 bg-cyan-600/10 border border-cyan-500/50 rounded-lg">
-                      <p className="text-sm text-cyan-400">
+                    <div className="p-3 bg-rose-600/10 border border-rose-500/50 rounded-lg">
+                      <p className="text-sm text-rose-400">
                         Los cortes se sincronizarán automáticamente con el ritmo
                         de la música
                       </p>
@@ -408,39 +408,39 @@ export function EditorForm({
 
               <Button
                 onClick={addTransition}
-                className="w-full bg-cyan-600 hover:bg-cyan-700"
+                className="w-full bg-rose-600 hover:bg-rose-700"
               >
                 <Plus className="h-4 w-4 mr-2" /> Añadir Transición
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800 border-slate-700 mt-6">
+          <Card className="bg-zinc-800 border-zinc-700 mt-6">
             <CardHeader>
-              <CardTitle className="text-cyan-400">Estadísticas</CardTitle>
+              <CardTitle className="text-rose-400">Estadísticas</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-400">Total clips:</span>
-                <span className="text-cyan-400">
+                <span className="text-rose-400">
                   {clips.filter((c) => c.type === "video").length}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Transiciones:</span>
-                <span className="text-cyan-400">
+                <span className="text-rose-400">
                   {clips.filter((c) => c.type === "transition").length}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Duración total:</span>
-                <span className="text-cyan-400">
+                <span className="text-rose-400">
                   {formatTime(totalDuration)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Velocidad promedio:</span>
-                <span className="text-cyan-400">
+                <span className="text-rose-400">
                   {(
                     clips
                       .filter((c) => c.type === "video")

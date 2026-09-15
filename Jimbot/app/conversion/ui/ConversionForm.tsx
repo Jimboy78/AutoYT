@@ -50,7 +50,7 @@ export function ConversionForm({
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-cyan-400">
+        <h1 className="text-3xl font-bold text-rose-400">
           Conversión de Formato
         </h1>
         <p className="text-gray-400">
@@ -62,9 +62,9 @@ export function ConversionForm({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Selector de formatos */}
         <div className="lg:col-span-2">
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-zinc-800 border-zinc-700">
             <CardHeader>
-              <CardTitle className="text-cyan-400">
+              <CardTitle className="text-rose-400">
                 Seleccionar Formatos
               </CardTitle>
               <CardDescription className="text-gray-400">
@@ -81,8 +81,8 @@ export function ConversionForm({
                       key={ratio.id}
                       className={`cursor-pointer transition-all duration-200 ${
                         isSelected
-                          ? "bg-cyan-600/20 border-cyan-500 ring-2 ring-cyan-500/50"
-                          : "bg-slate-700 border-slate-600 hover:border-cyan-500"
+                          ? "bg-rose-600/20 border-rose-500 ring-2 ring-rose-500/50"
+                          : "bg-zinc-700 border-zinc-600 hover:border-rose-500"
                       }`}
                       onClick={() => toggleRatio(ratio.id)}
                     >
@@ -90,21 +90,21 @@ export function ConversionForm({
                         <div className="flex items-start gap-3">
                           <Icon
                             className={`h-6 w-6 mt-1 ${
-                              isSelected ? "text-cyan-400" : "text-gray-400"
+                              isSelected ? "text-rose-400" : "text-gray-400"
                             }`}
                           />
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <h3
                                 className={`font-semibold ${
-                                  isSelected ? "text-cyan-400" : "text-gray-100"
+                                  isSelected ? "text-rose-400" : "text-gray-100"
                                 }`}
                               >
                                 {ratio.name}
                               </h3>
                               <Badge
                                 variant="outline"
-                                className="text-xs border-slate-500 text-gray-400"
+                                className="text-xs border-zinc-500 text-gray-400"
                               >
                                 {ratio.ratio}
                               </Badge>
@@ -120,7 +120,7 @@ export function ConversionForm({
                                 <Badge
                                   key={plat}
                                   variant="secondary"
-                                  className="text-xs bg-slate-600 text-gray-300"
+                                  className="text-xs bg-zinc-600 text-gray-300"
                                 >
                                   {plat}
                                 </Badge>
@@ -133,14 +133,14 @@ export function ConversionForm({
                   );
                 })}
               </div>
-              <div className="flex items-center justify-between pt-4 border-t border-slate-600">
+              <div className="flex items-center justify-between pt-4 border-t border-zinc-600">
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     id="multiple"
                     checked={generateMultiple}
                     onChange={(e) => setGenerateMultiple(e.target.checked)}
-                    className="rounded border-slate-600 bg-slate-700 text-cyan-600 focus:ring-cyan-500"
+                    className="rounded border-zinc-600 bg-zinc-700 text-rose-600 focus:ring-rose-500"
                   />
                   <Label htmlFor="multiple" className="text-gray-300">
                     Generar múltiples versiones simultáneamente
@@ -149,7 +149,7 @@ export function ConversionForm({
                 <Button
                   onClick={startConversion}
                   disabled={selectedRatios.length === 0}
-                  className="bg-cyan-600 hover:bg-cyan-700"
+                  className="bg-rose-600 hover:bg-rose-700"
                 >
                   <Settings className="h-4 w-4 mr-2" />
                   Iniciar Conversión
@@ -161,9 +161,9 @@ export function ConversionForm({
 
         {/* Preview */}
         <div>
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-zinc-800 border-zinc-700">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-cyan-400">
+              <CardTitle className="flex items-center gap-2 text-rose-400">
                 <Eye className="h-5 w-5" />
                 Preview en Vivo
               </CardTitle>
@@ -177,7 +177,7 @@ export function ConversionForm({
                 <select
                   value={previewRatio}
                   onChange={(e) => setPreviewRatio(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-gray-100"
+                  className="w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-gray-100"
                 >
                   {aspectRatios.map((r) => (
                     <option key={r.id} value={r.id}>
@@ -186,9 +186,9 @@ export function ConversionForm({
                   ))}
                 </select>
               </div>
-              <div className="bg-slate-900 rounded-lg p-4 flex items-center justify-center min-h-48">
+              <div className="bg-zinc-900 rounded-lg p-4 flex items-center justify-center min-h-48">
                 <div
-                  className="bg-gradient-to-br from-cyan-600 to-blue-600 rounded flex items-center justify-center text-white font-semibold shadow-lg"
+                  className="bg-gradient-to-br from-rose-600 to-blue-600 rounded flex items-center justify-center text-white font-semibold shadow-lg"
                   style={{
                     aspectRatio: `${previewAspectRatio.width} / ${previewAspectRatio.height}`,
                     width:
@@ -210,19 +210,19 @@ export function ConversionForm({
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-400">Resolución:</span>
-                  <span className="text-cyan-400">
+                  <span className="text-rose-400">
                     {previewAspectRatio.width}×{previewAspectRatio.height}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Aspect Ratio:</span>
-                  <span className="text-cyan-400">
+                  <span className="text-rose-400">
                     {previewAspectRatio.ratio}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Plataformas:</span>
-                  <span className="text-cyan-400">
+                  <span className="text-rose-400">
                     {previewAspectRatio.platforms.length}
                   </span>
                 </div>
@@ -234,9 +234,9 @@ export function ConversionForm({
 
       {/* Estado de jobs */}
       {conversionJobs.length > 0 && (
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="bg-zinc-800 border-zinc-700">
           <CardHeader>
-            <CardTitle className="text-cyan-400">
+            <CardTitle className="text-rose-400">
               Estado de Conversión
             </CardTitle>
             <CardDescription className="text-gray-400">
@@ -249,11 +249,11 @@ export function ConversionForm({
               return (
                 <div
                   key={job.id}
-                  className="border border-slate-600 rounded-lg p-4"
+                  className="border border-zinc-600 rounded-lg p-4"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <Icon className="h-5 w-5 text-cyan-400" />
+                      <Icon className="h-5 w-5 text-rose-400" />
                       <div>
                         <p className="font-medium">
                           {job.aspectRatio.name} ({job.aspectRatio.ratio})
@@ -269,7 +269,7 @@ export function ConversionForm({
                           job.status === "completed"
                             ? "bg-green-500"
                             : job.status === "processing"
-                            ? "bg-cyan-500"
+                            ? "bg-rose-500"
                             : job.status === "error"
                             ? "bg-red-500"
                             : "bg-gray-500"
@@ -286,7 +286,7 @@ export function ConversionForm({
                       {job.status === "completed" && (
                         <Button
                           size="sm"
-                          className="bg-cyan-600 hover:bg-cyan-700"
+                          className="bg-rose-600 hover:bg-rose-700"
                         >
                           <Download className="h-3 w-3 mr-1" />
                           Descargar

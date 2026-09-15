@@ -18,6 +18,8 @@ export interface Video {
   status: string;
   url: string;
   duration?: number | null;
+  /** Latest transcription state; absent when the video was never transcribed. */
+  transcription_status?: JobStatus | null;
 }
 
 export interface Clip {
@@ -27,6 +29,10 @@ export interface Clip {
   end: number;
   url?: string;
   thumbnail_url?: string | null;
+  /** 0..100 from the server's energy detector. */
+  score?: number | null;
+  /** Loudest instant inside the clip, seconds. */
+  peak?: number | null;
 }
 
 export type JobType = "transcoding" | "clipping" | "thumbnails" | "upload";
@@ -56,6 +62,9 @@ export interface Transcription {
   video_id: string;
   language: string;
   status: JobStatus;
+  error?: string | null;
+  /** faster-whisper model used by the server. */
+  model?: string | null;
   segments: Segment[];
 }
 
@@ -201,6 +210,21 @@ async function downloadText(path: string, filename: string) {
   a.download = filename;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/**
+ * Save a backend media file (clip, thumbnail). `<a download>` is ignored for cross-origin URLs, so the
+ * browser would just open the video: fetch it (CORS is open on the API) and save the blob instead.
+ */
+export async function downloadAsset(url: string, filename: string) {
+  const res = await fetch(apiAsset(url));
+  if (!res.ok) throw new Error(`${url} → ${res.status}`);
+  const objectUrl = URL.createObjectURL(await res.blob());
+  const a = document.createElement("a");
+  a.href = objectUrl;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
 }
 
 export function downloadSRT(videoId: string) {

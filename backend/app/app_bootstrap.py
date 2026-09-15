@@ -57,6 +57,14 @@ app.add_middleware(
 
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
+try:  # Tablas y columnas nuevas sobre bases existentes (SQLite sin migraciones legacy)
+    from .db import engine as _engine
+    from .utils.schema import ensure_schema
+
+    ensure_schema(_engine)
+except Exception as exc:  # noqa: BLE001 - no bloquear el arranque; se loguea
+    _json_log({"event": "ensure_schema_failed", "error": str(exc)})
+
 try:  # Routers modulares opcionales
     from .api.v1.endpoints import videos as videos_v1, jobs as jobs_v1  # type: ignore
 except Exception:  # noqa: BLE001

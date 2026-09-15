@@ -66,6 +66,17 @@ def test_end_to_end_transcode_clip_metadata(tmp_path):
         assert cr.status_code == 200
         clips = cr.json()
         assert len(clips) >= 1
+        from app.core.paths import UPLOAD_DIR
+        from app.services.ffmpeg_service import probe_duration
+        for c in clips:
+            # Each clip is its own cut file, not a pointer to the whole transcoded video.
+            clip_file = UPLOAD_DIR / os.path.basename(c['url'])
+            assert clip_file.exists() and not c['url'].endswith('.transcoded.mp4'), c
+            assert abs(probe_duration(clip_file) - (c['end'] - c['start'])) < 0.35, c
+            assert c['score'] is not None and c['peak'] is not None
+            assert c['thumbnail_url'] and (UPLOAD_DIR / os.path.basename(c['thumbnail_url'])).exists()
+        job = client.get(f'/api/v1/legacy/jobs/{job_id}').json()
+        assert job['status'] == 'completed' and job['progress'] == 100.0
         rm = client.post(f'/api/v1/legacy/videos/{vid_id}/refresh-metadata')
         assert rm.status_code == 200
         with SessionLocal() as s:

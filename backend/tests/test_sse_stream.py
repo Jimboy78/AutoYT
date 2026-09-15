@@ -39,7 +39,9 @@ def test_sse_first_event(tmp_path):
         # Conectarse al stream y leer primer payload jobs
         got_data = None
         start = time.time()
-        with client.stream('GET', '/api/v1/legacy/jobs/stream') as resp:
+        # once=true: a single snapshot, then the stream ends (the default stream is endless and
+        # only stops when the client disconnects, which TestClient cannot signal).
+        with client.stream('GET', '/api/v1/legacy/jobs/stream', params={'once': 'true'}) as resp:
             assert resp.status_code == 200
             for line in resp.iter_lines():
                 if not line:

@@ -11,7 +11,8 @@ class Settings(BaseSettings):
 
     model_config = {
         "env_file": ".env",
-        "case_sensitive": True,
+        # Env var names are case-insensitive on Windows; with True, DATABASE_URL was silently ignored.
+        "case_sensitive": False,
     }
 
 @lru_cache

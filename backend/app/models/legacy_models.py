@@ -44,6 +44,8 @@ class ClipModel(Base):
     end = Column(Float, nullable=False)
     url = Column(String, nullable=False)
     thumbnail_url = Column(String)
+    score = Column(Float)  # 0..100 from the energy detector
+    peak = Column(Float)  # seconds, loudest instant inside the clip
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     video = relationship("VideoModel", back_populates="clips")

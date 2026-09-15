@@ -59,6 +59,12 @@ export default function ClipsPage() {
     );
   }, [projects, projectId, minScore, sort]);
 
+  // Nothing local yet but a backend is connected: open on its clips instead of an empty tab.
+  const localEmpty = !loading && projects.length === 0 && renders.length === 0;
+  useEffect(() => {
+    if (localEmpty && API_CONFIGURED) setTab("server");
+  }, [localEmpty]);
+
   const visibleRenders = renders.filter((r) => projectId === "all" || r.projectId === projectId);
   const renderBytes = renders.reduce((acc, r) => acc + r.size, 0);
   const totalMoments = projects.reduce((acc, p) => acc + p.highlights.length, 0);
@@ -73,7 +79,7 @@ export default function ClipsPage() {
 
       {loading ? (
         <div className="h-48 animate-pulse rounded-2xl bg-white/5" />
-      ) : projects.length === 0 && renders.length === 0 ? (
+      ) : projects.length === 0 && renders.length === 0 && !API_CONFIGURED ? (
         <EmptyLibrary />
       ) : (
         <>

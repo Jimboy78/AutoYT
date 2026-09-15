@@ -1,9 +1,9 @@
 import os
-import uuid
 from celery import Celery
-import ffmpeg
 from .db import SessionLocal
-from .models import JobModel, ClipModel, VideoModel
+from .models import JobModel, VideoModel
+from .services.clipping import analyze_and_cut
+from .services.ffmpeg_service import transcode_baseline
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
@@ -13,99 +13,61 @@ celery_app = Celery(
     backend=os.getenv("CELERY_RESULT_BACKEND", REDIS_URL),
 )
 
+
+def _progress_writer(job_id: str, lo: float, hi: float):
+    """Map a stage's 0..100 into [lo, hi] of the job and persist it (throttled to 1 % steps)."""
+    last = [-1.0]
+
+    def report(percent: float):
+        value = round(lo + (hi - lo) * min(100.0, max(0.0, percent)) / 100, 1)
+        if value - last[0] < 1:
+            return
+        last[0] = value
+        with SessionLocal() as db:
+            job = db.get(JobModel, job_id)
+            if job:
+                job.progress = value
+                db.commit()
+
+    return report
+
+
 @celery_app.task(name="transcode_and_clip")
-def transcode_and_clip(job_id: str, video_id: str, upload_dir: str, filename: str):
-    """Celery task: transcodifica un video y genera clips con miniaturas.
-    Actualiza el Job en DB y crea filas en clips.
-    """
+def transcode_and_clip(job_id: str, video_id: str, upload_dir: str, filename: str, sensitivity: float = 55):
+    """Celery task: transcodifica (0–50 %) y detecta/corta los momentos (50–100 %)."""
     in_path = os.path.join(upload_dir, filename)
     name, _ = os.path.splitext(filename)
-    out_name = f"{name}.transcoded.mp4"
-    out_path = os.path.join(upload_dir, out_name)
-    file_url = f"/uploads/{out_name}"
+    out_path = os.path.join(upload_dir, f"{name}.transcoded.mp4")
 
     with SessionLocal() as db:
         job = db.get(JobModel, job_id)
         if not job:
-            # Nada que hacer, pero evitamos fallo
             return
         job.status = "processing"
-        job.progress = 1.0
+        job.progress = 0.0
         db.commit()
-        try:
-            (
-                ffmpeg
-                .input(in_path)
-                .output(out_path, vcodec="libx264", acodec="aac", video_bitrate="1500k", audio_bitrate="128k", preset="veryfast", movflags="+faststart")
-                .overwrite_output()
-                .run(capture_stdout=True, capture_stderr=True)
-            )
-            job.progress = 50.0
+
+    try:
+        transcode_baseline(in_path, out_path, on_progress=_progress_writer(job_id, 0, 50))
+        analyze_and_cut(video_id=video_id, media_path=out_path, analysis_path=in_path, report=_progress_writer(job_id, 50, 99), sensitivity=sensitivity)
+    except Exception as exc:  # noqa: BLE001 - stored on the job
+        with SessionLocal() as db:
+            job = db.get(JobModel, job_id)
+            if job:
+                job.status = "error"
+                job.error = str(exc)[:1000]
+            video = db.get(VideoModel, video_id)
+            if video:
+                video.status = "error"
             db.commit()
-        except ffmpeg.Error as e:
-            job.status = "error"
-            job.error = e.stderr.decode("utf-8", errors="ignore") if isinstance(e.stderr, (bytes, bytearray)) else str(e)
-            job.progress = 0.0
-            db.commit()
-            return
+        return
 
-        # Simular clipping fijo y generar thumbnails
-        # Duración con ffprobe
-        dur = 0.0
-        try:
-            probe = ffmpeg.probe(out_path)
-            dur = float(probe.get("format", {}).get("duration", 0))
-        except Exception:
-            dur = 0.0
-        # Actualiza duración en Video si está vacía
-        vid = db.get(VideoModel, video_id)
-        if vid and (vid.duration is None or vid.duration == 0):
-            vid.duration = dur or vid.duration
-            db.commit()
-
-        clips = []
-        if dur and dur > 0:
-            clip_len = max(3.0, min(10.0, dur * 0.2))
-            centers = [dur * 0.15, dur * 0.5, dur * 0.8]
-            windows = []
-            for c in centers:
-                start = max(0.0, c - clip_len / 2.0)
-                end = min(dur, start + clip_len)
-                windows.append((start, end))
-        else:
-            windows = [(0.0, 10.0), (12.0, 25.0), (30.0, 45.0)]
-
-        for idx, (start, end) in enumerate(windows):
-            cid = str(uuid.uuid4())
-            thumb_name = f"{cid}.jpg"
-            thumb_path = os.path.join(upload_dir, thumb_name)
-            mid = max(0.0, (start + end) / 2.0)
-            thumb_url = None
-            try:
-                (
-                    ffmpeg
-                    .input(out_path, ss=mid)
-                    .output(thumb_path, vframes=1)
-                    .overwrite_output()
-                    .run(capture_stdout=True, capture_stderr=True)
-                )
-                thumb_url = f"/uploads/{thumb_name}"
-            except Exception:
-                thumb_url = None
-
-            clips.append(ClipModel(id=cid, video_id=video_id, start=start, end=end, url=file_url, thumbnail_url=thumb_url))
-            # progreso intermedio
-            job.progress = 50.0 + (idx + 1) * (50.0 / max(1, len(windows)))
-            db.commit()
-
-        # Persistir clips
-        for c in clips:
-            if not db.get(ClipModel, c.id):
-                db.add(c)
-        # Actualizar video status opcionalmente
-        if vid:
-            vid.status = "processed"
-        # Completar job
-        job.status = "completed"
-        job.progress = 100.0
+    with SessionLocal() as db:
+        job = db.get(JobModel, job_id)
+        video = db.get(VideoModel, video_id)
+        if video:
+            video.status = "processed"
+        if job:
+            job.status = "completed"
+            job.progress = 100.0
         db.commit()

@@ -8,6 +8,8 @@ class Video(BaseModel):
     status: str = "uploaded"
     url: str
     duration: Optional[float] = None
+    # Latest transcription state, so clients know whether there is one to fetch.
+    transcription_status: Optional[str] = None
 
 class Clip(BaseModel):
     id: str
@@ -16,6 +18,8 @@ class Clip(BaseModel):
     end: float
     url: str
     thumbnail_url: Optional[str] = None
+    score: Optional[float] = None
+    peak: Optional[float] = None
 
 JobType = Literal["transcoding", "clipping", "thumbnails", "upload"]
 JobStatus = Literal["pending", "processing", "completed", "error"]
@@ -42,6 +46,8 @@ class Transcription(BaseModel):
     video_id: str
     language: str = "es"
     status: Literal["pending", "processing", "completed", "error"] = "pending"
+    error: Optional[str] = None
+    model: Optional[str] = None
     segments: List[Segment] = []
 
 # Upload / presign models

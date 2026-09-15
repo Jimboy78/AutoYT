@@ -2,6 +2,7 @@
 // Everything is drawn per frame: motion-tracked crop, audio-driven punch-in zoom and shake,
 // animated hook sticker, live spectrum bars from the real audio, and a progress bar.
 
+import type { TranscriptWord } from "../library";
 import { HOP } from "./analyze";
 import { CropTracker, GRID_H, GRID_W, cropRect, motionFocus, toLuma, windowFraction } from "./reframe";
 
@@ -30,6 +31,8 @@ export interface ShortOptions {
   reframe: boolean;
   punch: boolean;
   bars: boolean;
+  /** Timed words from the transcript, drawn as karaoke captions. */
+  captions: TranscriptWord[] | null;
 }
 
 export interface TrackSample {
@@ -158,6 +161,58 @@ function drawHook(ctx: CanvasRenderingContext2D, text: string, style: ShortStyle
 
   ctx.fillStyle = style.ink;
   lines.forEach((line, i) => ctx.fillText(line, 0, -blockH / 2 + lineHeight * (i + 0.5) + 4));
+  ctx.restore();
+}
+
+const CAPTION_PAGE = 3;
+
+/** Three words at a time; the word being spoken pops and takes the accent color. */
+function drawCaptions(ctx: CanvasRenderingContext2D, words: TranscriptWord[], t: number, style: ShortStyle, font: string) {
+  let current = -1;
+  let lo = 0;
+  let hi = words.length - 1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (words[mid].start <= t) {
+      current = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  if (current < 0) return;
+  const first = Math.floor(current / CAPTION_PAGE) * CAPTION_PAGE;
+  const group = words.slice(first, first + CAPTION_PAGE);
+  if (t > group[group.length - 1].end + 0.35) return;
+
+  ctx.save();
+  ctx.font = `62px ${font}`;
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "center";
+  ctx.lineJoin = "round";
+  const texts = group.map((w) => w.text.toUpperCase());
+  const widths = texts.map((s) => ctx.measureText(s).width);
+  const gap = 18;
+  const total = widths.reduce((a, b) => a + b, 0) + gap * (texts.length - 1);
+  const scale = Math.min(1, (OUT_W - 80) / total);
+  ctx.translate(OUT_W / 2, 900);
+  ctx.scale(scale, scale);
+  let x = -total / 2;
+  group.forEach((w, k) => {
+    const index = first + k;
+    const speaking = index === current && t <= w.end + 0.15;
+    const pop = speaking ? 1 + 0.2 * Math.max(0, 1 - (t - w.start) / 0.2) : 1;
+    ctx.save();
+    ctx.translate(x + widths[k] / 2, 0);
+    ctx.scale(pop, pop);
+    ctx.lineWidth = 12;
+    ctx.strokeStyle = "rgba(0,0,0,0.9)";
+    ctx.strokeText(texts[k], 0, 0);
+    ctx.fillStyle = speaking ? style.accent : "#ffffff";
+    ctx.fillText(texts[k], 0, 0);
+    ctx.restore();
+    x += widths[k] + gap;
+  });
   ctx.restore();
 }
 
@@ -336,6 +391,8 @@ export async function renderShort(job: RenderJob): Promise<RenderResult> {
       }
       drawBars(ctx, levels, options.style);
     }
+
+    if (options.captions?.length) drawCaptions(ctx, options.captions, t, options.style, font);
 
     drawHook(ctx, options.hook, options.style, font, mode === "still" ? 1 : local);
 

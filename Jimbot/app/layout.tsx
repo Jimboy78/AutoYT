@@ -28,7 +28,7 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <SidebarProvider defaultOpen={true}>
           <AppSidebar />
-          <SidebarInset className="bg-background">
+          <SidebarInset className="min-w-0 bg-background">
             <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-white/5 bg-background/80 px-4 backdrop-blur-xl">
               <SidebarTrigger className="-ml-1" />
               <Link href="/" className="md:hidden">

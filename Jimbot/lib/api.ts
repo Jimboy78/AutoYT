@@ -7,6 +7,9 @@ const LEGACY = "/api/v1/legacy";
 
 export const API_CONFIGURED = BASE !== "";
 
+/** Backend returns media as "/uploads/…"; make it absolute against the API origin. */
+export const apiAsset = (url?: string | null) => (!url ? "" : url.startsWith("http") ? url : `${BASE}${url}`);
+
 // ---------- Tipos (espejo de backend/app/schemas/legacy.py) ----------
 
 export interface Video {

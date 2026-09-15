@@ -127,19 +127,27 @@ export function detectMoments(
 ): Moments {
   const opt = { ...DEFAULT_DETECT, ...options };
   const n = db.length;
-  const k = Math.max(1, Math.round(0.5 / HOP));
+  // Smooth in linear power (a sliding RMS), not in dB: averaging decibels lets a pause of digital
+  // silence (-120 dB) next to a short scream drag the scream below the speech level.
+  const k = Math.max(1, Math.round(0.3 / HOP));
   const prefix = new Float64Array(n + 1);
-  for (let i = 0; i < n; i++) prefix[i + 1] = prefix[i] + db[i];
+  for (let i = 0; i < n; i++) prefix[i + 1] = prefix[i] + 10 ** (db[i] / 10);
   const smooth = new Float32Array(n);
   for (let i = 0; i < n; i++) {
     const a = Math.max(0, i - k);
     const b = Math.min(n, i + k + 1);
-    smooth[i] = (prefix[b] - prefix[a]) / (b - a);
+    smooth[i] = 10 * Math.log10((prefix[b] - prefix[a]) / (b - a) + 1e-12);
   }
 
-  const med = median(smooth);
-  const dev = new Float32Array(n);
-  for (let i = 0; i < n; i++) dev[i] = Math.abs(smooth[i] - med);
+  // Baseline from the frames that actually carry sound: pauses (often digital silence at -120 dB)
+  // would otherwise inflate the spread and hide every peak in talk-heavy videos.
+  const roughMed = median(smooth);
+  const activeFloor = Math.max(-70, roughMed - 30);
+  const active = smooth.filter((v) => v >= activeFloor);
+  const basis = active.length >= Math.max(10, n * 0.1) ? active : smooth;
+  const med = median(basis);
+  const dev = new Float32Array(basis.length);
+  for (let i = 0; i < basis.length; i++) dev[i] = Math.abs(basis[i] - med);
   // Floor the spread so near-constant audio doesn't turn tiny wiggles into "peaks".
   const spread = Math.max(1.5, 1.4826 * median(dev));
   const z = new Float32Array(n);
@@ -235,7 +243,23 @@ export function buildChapters(duration: number, highlights: Highlight[]): Chapte
     if (bestGap / 2 < 10) break;
     chapters.splice(bestIdx + 1, 0, { time: Math.floor(chapters[bestIdx].time + bestGap / 2), kind: "part" });
   }
-  return chapters;
+  if (chapters.length >= 3) return chapters;
+
+  // Short videos (30–40 s): halving gaps can't fit three 10 s chapters, so lay out an even grid and
+  // snap each slot to a moment that still keeps every chapter (including the last) ≥ 10 s.
+  const count = Math.min(3, Math.floor(duration / 10));
+  const grid: Chapter[] = [{ time: 0, kind: "intro" }];
+  for (let i = 1; i < count; i++) {
+    const lo = grid[grid.length - 1].time + 10;
+    const hi = Math.floor(duration - 10 * (count - i));
+    const ideal = Math.floor((duration * i) / count);
+    const h = highlights.find((x) => {
+      const t = Math.floor(x.start);
+      return t >= lo && t <= hi && Math.abs(t - ideal) <= duration / (2 * count);
+    });
+    grid.push(h ? { time: Math.floor(h.start), kind: "highlight", highlightId: h.id } : { time: Math.max(lo, Math.min(hi, ideal)), kind: "part" });
+  }
+  return grid;
 }
 
 /** Frames to score as thumbnail candidates: highlight peaks first, plus an even spread. */

@@ -40,7 +40,7 @@ function release(video: HTMLVideoElement) {
   video.load();
 }
 
-function scoreFrame(pixels: Uint8ClampedArray) {
+export function scoreFrame(pixels: Uint8ClampedArray) {
   let n = 0;
   let sumL = 0;
   let sumL2 = 0;

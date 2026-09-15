@@ -21,6 +21,7 @@ import {
 } from "@/lib/studio/analyze";
 import { extractFrames, type FrameCandidate } from "@/lib/studio/frames";
 import { formatBytes, formatClock } from "@/lib/studio/format";
+import { startTask } from "@/lib/tasks";
 import { cn } from "@/lib/utils";
 import { Dropzone } from "./ui/Dropzone";
 import { ChaptersPanel, defaultChapterTitle, ExportPanel } from "./ui/ExportPanels";
@@ -59,6 +60,7 @@ export default function StudioPage() {
   const [detect, setDetect] = useState<DetectOptions>(DEFAULT_DETECT);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [initialHighlight, setInitialHighlight] = useState<number | null>(null);
   const [preset] = usePresetChoice();
   const presetRef = useRef(preset);
   presetRef.current = preset;
@@ -91,6 +93,7 @@ export default function StudioPage() {
       setSaveError(null);
       setStep(0);
       setFrameProgress(0);
+      const task = startTask({ kind: "analysis", title: f.name });
       try {
         const id = projectIdFor(f);
         const previous = await getProject(id).catch(() => undefined);
@@ -101,20 +104,25 @@ export default function StudioPage() {
         setDetect(choice.detect);
         setChapterTitles(previousTitles);
 
+        task.update({ stage: "Decodificando audio", progress: 0.05 });
         await nextFrame();
         const buffer = await decodeAudio(f);
         setStep(1);
+        task.update({ stage: "Midiendo energía", progress: 0.35 });
         await nextFrame();
         const measured = measureEnergy(buffer);
         setStep(2);
+        task.update({ stage: "Detectando momentos", progress: 0.45 });
         await nextFrame();
         const detected = detectMoments(measured.db, measured.duration, sens, choice.detect);
         setEnergy(measured);
         setStep(3);
+        task.update({ stage: "Puntuando frames", progress: 0.5 });
         const extracted = f.type.startsWith("video/")
-          ? await extractFrames(url, pickFrameTimes(measured.duration, detected.highlights), (done, total) =>
-              setFrameProgress(Math.round((done / total) * 100)),
-            )
+          ? await extractFrames(url, pickFrameTimes(measured.duration, detected.highlights), (done, total) => {
+              setFrameProgress(Math.round((done / total) * 100));
+              task.update({ progress: 0.5 + (0.45 * done) / total });
+            })
           : [];
         setStep(4);
         await nextFrame();
@@ -154,10 +162,13 @@ export default function StudioPage() {
             previous ? undefined : f,
           );
           setProjectId(id);
+          task.update({ projectId: id });
         } catch (err) {
           setSaveError(err instanceof Error ? err.message : "No se pudo guardar en la biblioteca.");
         }
+        task.done(`${detected.highlights.length} momentos en ${formatClock(measured.duration)}`);
       } catch (err) {
+        task.fail(err);
         setError(err instanceof Error ? err.message : "No se pudo analizar el archivo.");
         setPhase("error");
       }
@@ -195,7 +206,10 @@ export default function StudioPage() {
   );
 
   useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get("p");
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("p");
+    const h = Number(params.get("h"));
+    if (Number.isFinite(h) && h > 0) setInitialHighlight(h);
     if (id) void openProject(id);
   }, [openProject]);
 
@@ -408,6 +422,7 @@ export default function StudioPage() {
                 z={moments.z}
                 projectId={projectId}
                 defaults={presetById(preset.id).shorts}
+                initialHighlightId={initialHighlight}
               />
             </TabsContent>
           )}

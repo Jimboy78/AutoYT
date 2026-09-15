@@ -2,16 +2,18 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { AudioLines, Crosshair, Database, Download, Loader2, Play, Square, Wand2, Zap } from "lucide-react";
+import { AudioLines, Captions, Crosshair, Database, Download, Loader2, Play, Square, Wand2, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { saveRender } from "@/lib/library";
+import { useProject } from "@/lib/library/hooks";
 import type { ShortsDefaults } from "@/lib/presets";
 import type { Highlight } from "@/lib/studio/analyze";
 import { formatBytes, formatClock } from "@/lib/studio/format";
 import { recordingMime, renderShort, SHORT_STYLES, type TrackSample } from "@/lib/studio/shorts";
+import { startTask } from "@/lib/tasks";
 import { cn } from "@/lib/utils";
 
 const HOOKS = ["Esperá al final 😳", "No puedo creer esto", "El mejor momento 🔥", "Esto se descontroló"];
@@ -37,18 +39,26 @@ interface Props {
   /** When set, finished renders are stored in the library's clip gallery. */
   projectId?: string | null;
   defaults?: ShortsDefaults;
+  initialHighlightId?: number | null;
 }
 
-export function ShortsForge({ src, fileName, duration, highlights, z, projectId, defaults }: Props) {
+export function ShortsForge({ src, fileName, duration, highlights, z, projectId, defaults, initialHighlightId }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const [selectedId, setSelectedId] = useState<number | null>(highlights[0]?.id ?? null);
+  const [selectedId, setSelectedId] = useState<number | null>(
+    highlights.find((h) => h.id === initialHighlightId)?.id ?? highlights[0]?.id ?? null,
+  );
   const [hook, setHook] = useState(defaults?.hook ?? HOOKS[0]);
   const [styleId, setStyleId] = useState(SHORT_STYLES[0].id);
   const [reframe, setReframe] = useState(defaults?.reframe ?? true);
   const [punch, setPunch] = useState(defaults?.punch ?? true);
   const [bars, setBars] = useState(defaults?.bars ?? true);
   const [pad, setPad] = useState(defaults?.pad ?? 1);
+  const [captions, setCaptions] = useState(true);
+  const { data: project } = useProject(projectId);
+  const transcript = project?.transcript;
+  const words = useMemo(() => transcript?.segments.flatMap((s) => s.words) ?? null, [transcript]);
+  const hasWords = !!words?.length;
   const [status, setStatus] = useState<Status>("idle");
   const [progress, setProgress] = useState(0);
   const [samples, setSamples] = useState<TrackSample[]>([]);
@@ -64,7 +74,10 @@ export function ShortsForge({ src, fileName, duration, highlights, z, projectId,
   const start = highlight ? Math.max(0, highlight.start - pad) : 0;
   const end = highlight ? Math.min(duration, highlight.end + pad, start + MAX_CLIP) : 0;
   const style = SHORT_STYLES.find((s) => s.id === styleId) ?? SHORT_STYLES[0];
-  const options = useMemo(() => ({ hook, style, reframe, punch, bars }), [hook, style, reframe, punch, bars]);
+  const options = useMemo(
+    () => ({ hook, style, reframe, punch, bars, captions: captions && hasWords ? words : null }),
+    [hook, style, reframe, punch, bars, captions, hasWords, words],
+  );
 
   // Redraw the first frame whenever the look changes, so the phone always shows the current design.
   useEffect(() => {
@@ -90,6 +103,8 @@ export function ShortsForge({ src, fileName, duration, highlights, z, projectId,
     setProgress(0);
     setError(null);
     setSamples([]);
+    const task = mode === "record" ? startTask({ kind: "short", title: `Short #${highlight.id} · ${fileName}`, projectId, cancel: () => controller.abort() }) : null;
+    task?.update({ stage: `${style.label} · ${formatClock(start)}–${formatClock(end)}` });
     try {
       const out = await renderShort({
         src,
@@ -100,8 +115,15 @@ export function ShortsForge({ src, fileName, duration, highlights, z, projectId,
         canvas,
         mode,
         signal: controller.signal,
-        onProgress: (p) => setProgress(Math.round(p * 100)),
+        onProgress: (p) => {
+          setProgress(Math.round(p * 100));
+          task?.update({ progress: p });
+        },
       });
+      if (task) {
+        if (out.blob) task.done(`${formatBytes(out.blob.size)} en ${(out.elapsed / 1000).toFixed(1)} s`);
+        else task.cancelled();
+      }
       setSamples(out.samples);
       if (out.blob) {
         const base = fileName.replace(/\.[^.]+$/, "").replace(/[^\w-]+/g, "_");
@@ -119,7 +141,7 @@ export function ShortsForge({ src, fileName, duration, highlights, z, projectId,
                 duration: end - start,
                 width: 720,
                 height: 1280,
-                settings: { highlightId: highlight.id, start, end, hook, style: style.id, reframe, punch, bars },
+                settings: { highlightId: highlight.id, start, end, hook, style: style.id, reframe, punch, bars, captions: !!options.captions },
               },
               out.blob,
             );
@@ -131,6 +153,7 @@ export function ShortsForge({ src, fileName, duration, highlights, z, projectId,
         setResult({ url: URL.createObjectURL(out.blob), name, size: out.blob.size, mime, elapsed: out.elapsed, saved });
       }
     } catch (err) {
+      task?.fail(err);
       setError(err instanceof Error ? err.message : "No se pudo renderizar el clip.");
     } finally {
       if (abortRef.current === controller) {
@@ -235,11 +258,24 @@ export function ShortsForge({ src, fileName, duration, highlights, z, projectId,
               </button>
             ))}
           </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
             <Toggle icon={Crosshair} label="Auto-reencuadre" hint="Sigue el movimiento" checked={reframe} onChange={setReframe} disabled={busy} />
             <Toggle icon={Zap} label="Punch-in" hint="Zoom y temblor en picos" checked={punch} onChange={setPunch} disabled={busy} />
             <Toggle icon={AudioLines} label="Espectro" hint="Barras del audio real" checked={bars} onChange={setBars} disabled={busy} />
+            <Toggle
+              icon={Captions}
+              label="Subtítulos"
+              hint={hasWords ? `Karaoke con ${words!.length} palabras` : "Transcribí el video primero"}
+              checked={captions && hasWords}
+              onChange={setCaptions}
+              disabled={busy || !hasWords}
+            />
           </div>
+          {!hasWords && projectId && (
+            <Link href={`/transcriptions?p=${encodeURIComponent(projectId)}`} className="mt-2 inline-flex items-center gap-1.5 text-xs text-sky-300 hover:underline">
+              <Captions className="h-3.5 w-3.5" /> Transcribir con Whisper para agregar subtítulos
+            </Link>
+          )}
         </Section>
 
         <div className="flex flex-wrap items-center gap-3">

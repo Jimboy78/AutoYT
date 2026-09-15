@@ -1,0 +1,117 @@
+openapi: 3.1.0
+info:
+  title: AutoYT API
+  version: 0.1.0
+paths:
+  /api/v1/videos:
+    post:
+      summary: Crear video (registro inicial)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VideoCreate"
+      responses:
+        "201":
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoRead"
+  /api/v1/videos/{video_id}/process:
+    post:
+      summary: Encolar pipeline para un video
+      parameters:
+        - in: path
+          name: video_id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Pipeline encolado
+  /api/v1/videos/{video_id}:
+    get:
+      summary: Obtener detalle video (incluye clips)
+      parameters:
+        - in: path
+          name: video_id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoDetail"
+  /api/v1/jobs:
+    get:
+      summary: Listar jobs
+      parameters:
+        - in: query
+          name: video_id
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Lista
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JobRead"
+  /api/v1/jobs/run-once:
+    post:
+      summary: Ejecuta un job pendiente (worker temporal)
+      responses:
+        "200":
+          description: Resultado
+components:
+  schemas:
+    VideoCreate:
+      type: object
+      properties:
+        filename: { type: string }
+      required: [filename]
+    VideoRead:
+      type: object
+      properties:
+        id: { type: integer }
+        status: { $ref: "#/components/schemas/VideoStatus" }
+        duration_seconds: { type: number, nullable: true }
+        original_path: { type: string }
+        normalized_path: { type: string, nullable: true }
+    VideoDetail:
+      allOf:
+        - $ref: "#/components/schemas/VideoRead"
+        - type: object
+          properties:
+            clips:
+              type: array
+              items: { $ref: "#/components/schemas/ClipRead" }
+    ClipRead:
+      type: object
+      properties:
+        id: { type: integer }
+        start: { type: number }
+        end: { type: number }
+        score: { type: number, nullable: true }
+    JobRead:
+      type: object
+      properties:
+        id: { type: integer }
+        type: { $ref: "#/components/schemas/JobType" }
+        state: { $ref: "#/components/schemas/JobState" }
+        tries: { type: integer }
+        message: { type: string, nullable: true }
+        video_id: { type: integer, nullable: true }
+    VideoStatus:
+      type: string
+      enum: [pending, processing, ready, error]
+    JobType:
+      type: string
+      enum: [upload_ingest, transcode_normalize, detect_events, cut_clips]
+    JobState:
+      type: string
+      enum: [queued, running, success, failed]

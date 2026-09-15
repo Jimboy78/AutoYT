@@ -21,7 +21,7 @@ const STATUS_LABEL: Record<UploadStatus, string> = {
 };
 
 export default function UploadPage() {
-  const { status, progress, error, videoId, taskId, start, cancel, reset } = useUpload();
+  const { status, progress, error, videoId, start, cancel, reset } = useUpload();
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -128,7 +128,7 @@ export default function UploadPage() {
             )}
             {status === "done" && videoId && (
               <Link
-                href={`/processing?videoId=${encodeURIComponent(videoId)}${taskId ? `&taskId=${encodeURIComponent(taskId)}` : ""}`}
+                href={`/videos/${encodeURIComponent(videoId)}`}
                 className="inline-flex items-center gap-2 rounded-md bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700"
               >
                 Ver procesamiento <ArrowRight className="h-4 w-4" />

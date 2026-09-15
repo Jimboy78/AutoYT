@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Activity,
+  AudioWaveform,
   BarChart3,
   FileText,
   Film,
@@ -30,6 +31,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Logo } from "@/components/brand/logo";
+import { API_CONFIGURED } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 interface MenuItem {
@@ -38,27 +40,30 @@ interface MenuItem {
   icon: LucideIcon;
 }
 
-const liveItems: MenuItem[] = [
+const createItems: MenuItem[] = [
   { title: "Inicio", url: "/", icon: Home },
   { title: "Studio", url: "/studio", icon: Sparkles },
+  { title: "Editor de Ritmo", url: "/editor", icon: AudioWaveform },
+  { title: "Conversión", url: "/conversion", icon: Monitor },
+  { title: "Transcripciones", url: "/transcriptions", icon: FileText },
+  { title: "Miniaturas", url: "/thumbnails", icon: ImageIcon },
+  { title: "YouTube", url: "/youtube", icon: Youtube },
 ];
 
-// Screens that talk to the FastAPI backend (NEXT_PUBLIC_API_BASE).
-const pipelineItems: MenuItem[] = [
-  { title: "Upload", url: "/upload", icon: Upload },
-  { title: "Videos", url: "/videos", icon: Film },
+const libraryItems: MenuItem[] = [
+  { title: "Galería de Clips", url: "/clips", icon: Grid3X3 },
   { title: "Tipo de Edición", url: "/edit-type", icon: Scissors },
   { title: "Procesamiento", url: "/processing", icon: Activity },
-  { title: "Galería de Clips", url: "/clips", icon: Grid3X3 },
-  { title: "Editor de Ritmo", url: "/editor", icon: Film },
-  { title: "Conversión", url: "/conversion", icon: Monitor },
-  { title: "Miniaturas IA", url: "/thumbnails", icon: ImageIcon },
-  { title: "YouTube", url: "/youtube", icon: Youtube },
-  { title: "Transcripciones", url: "/transcriptions", icon: FileText },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
 ];
 
-function NavGroup({ label, items, badge }: { label: string; items: MenuItem[]; badge: React.ReactNode }) {
+// Screens backed by the FastAPI service (NEXT_PUBLIC_API_BASE).
+const serverItems: MenuItem[] = [
+  { title: "Upload", url: "/upload", icon: Upload },
+  { title: "Videos", url: "/videos", icon: Film },
+];
+
+function NavGroup({ label, items, badge }: { label: string; items: MenuItem[]; badge?: React.ReactNode }) {
   const pathname = usePathname();
   return (
     <SidebarGroup>
@@ -104,24 +109,29 @@ export function AppSidebar() {
 
       <SidebarContent>
         <NavGroup
-          label="En vivo"
-          items={liveItems}
+          label="Crear"
+          items={createItems}
           badge={
             <span className="flex items-center gap-1 text-[10px] text-emerald-400">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" /> local
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" /> en tu navegador
             </span>
           }
         />
+        <NavGroup label="Biblioteca" items={libraryItems} />
         <NavGroup
-          label="Pipeline"
-          items={pipelineItems}
-          badge={<span className="text-[10px] text-yellow-400/80">requiere API</span>}
+          label="Servidor"
+          items={serverItems}
+          badge={
+            <span className={cn("text-[10px]", API_CONFIGURED ? "text-emerald-400" : "text-yellow-400/80")}>
+              {API_CONFIGURED ? "conectado" : "requiere API"}
+            </span>
+          }
         />
       </SidebarContent>
 
       <SidebarFooter className="border-t border-white/5 p-4">
         <p className="text-xs leading-relaxed text-zinc-500">
-          El Studio analiza en tu navegador. El pipeline usa FastAPI + Celery.
+          Tus videos, renders y transcripciones quedan en este navegador (IndexedDB). El backend FastAPI es opcional.
         </p>
       </SidebarFooter>
     </Sidebar>
